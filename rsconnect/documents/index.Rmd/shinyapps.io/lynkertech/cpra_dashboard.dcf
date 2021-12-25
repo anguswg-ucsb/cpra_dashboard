@@ -1,0 +1,12 @@
+name: cpra_dashboard
+title: cpra_dashboard
+username:
+account: lynkertech
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5139554
+bundleId: 5404893
+url: https://lynkertech.shinyapps.io/cpra_dashboard/
+when: 1640282025.93207
+asMultiple: FALSE
+asStatic: FALSE
