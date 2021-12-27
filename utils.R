@@ -1,384 +1,384 @@
-# --- Shiny utils ---
-basemap <- function(
-  land_sf,
-  road_buffer,
-  cpra_projects,
-  cup,
-  ldh,
-  aoc,
-  oyster_leases,
-  sal3,
-  sal10,
-  depth1,
-  wlvl_clamp,
-  fetch_cat7,
-  waterways,
-  sowb,
-  hsi_2017,  # hsi_sal3, hsi_sal10, hsi_sal3_mask, hsi_sal10_mask,  mask_open,  mask_interm,
-  pts = NULL
-) {
-
-  # ==================================
-  # ---- COLOR PALETTES & LABELS -----
-  # ==================================
-
-  # Fetch color palette + labels
-  fetch_categories <- length(unique(raster::values(fetch_cat7))) -1
-  fetch_cols       <- data.frame(fetch_cols = c(1, 2, 3, 4, 5, 10, 20))  # fetch_cols <- data.frame(fetch_cols = 1:fetch_categories)
-  turbo_pal        <- viridisLite::turbo(n = fetch_categories, direction = -1)
-  fetch_fact_df    <- fetch_cols %>% mutate(fetch_cols = factor(fetch_cols))
-  fetch_fact       <- colorFactor(turbo_pal,   domain = fetch_fact_df$fetch_cols)
-  fetch_labels     <- c("1km", "2m", "3km", "4km", "5km", "10km", "20km")
-  # fetch_pal      <- colorNumeric(palette = turbo_pal,   domain = fetch_cols$fetch_cols, reverse = TRUE, na.color = NA)
-  # pal = colorNumeric("Blues", reverse= F, na.color = "#00000000",      domain = unique(values(fetch_rc)))
-
-  # Salinity color palette + labels
-  sal_cols         <- data.frame(numeric_cols = 1:36)
-  sal_pal          <- colorNumeric('viridis', domain = sal_cols$numeric_cols, na.color = NA, reverse = TRUE)
-
-  # Water level variability palatte + labels
-  wlvl_pal          <- colorNumeric(turbo(n = 20), domain = values(wlvl_clamp), na.color = NA, reverse = F)
-
-  # Depth factors color palette + labels
-  depth_lvl          <- data.frame(numeric_cols = 1:3)
-  depth_labels       <- c("Too shallow", "Shallow water", "Deep water")
-  depth_fact_pal     <- colorFactor(brewer.pal(9, "Spectral"), domain = depth_labels, reverse = T)
-  # depth_fact_pal   <- colorNumeric(mako(n = 3), domain = values(depth1), reverse = T)
-
-  # hsi_pal          <- colorNumeric('magma', domain =values(hsi_sal3), na.color = NA, reverse = F)
-
-  # LDH factor color palette
-  factpal          <- colorFactor(c("red", "yellow", "green"),   domain = ldh$Status)
-
-  # sowb legend color palette + label
-  sowb_label       <- "State owned water bottoms"
-  sowb_pal         <- colorFactor(c("#00bfb2"),   domain = sowb_label)
-
-  # Coastal use permits legend color palette + label
-  cup_label        <- "Coastal use permits"
-  cup_pal          <- colorFactor(c("#EAC435"),   domain = cup_label)
-
-  # CPRA restoration proj legend color palette + label
-  cpra_proj_label  <- "CPRA projects"
-  cpra_proj_pal    <- colorFactor(c("green", "orange"),   domain = cpra_projects$type)
-
-  # CPRA factor color palette
-  # cpra_pal          <- colorFactor(c("red", "yellow", "green"),   domain = ldh$Status)
-
-  # Navigablewaterways legend color palette + label
-  waterways_label  <- "USACE navigation channels"
-  waterways_pal    <- colorFactor(c("dodgerblue"), domain = waterways_label)
-
-  # Mask open legend color palette + label
-  # mask_open_label          <- "Full mask (LDH open)"
-  # mask_open_pal            <- colorFactor(c("grey"),   domain = mask_open_label)
-
-  # Mask open + interm. legend color palette + label
-  # mask_interm_label        <- "Full mask (LDH open & intermed.)"
-  # mask_interm_pal          <- colorFactor(c("grey"),   domain = mask_interm_label)
-
-  # AOC active/not active factor color palette
-  aoc_pal          <- colorFactor(c("darkorange"),   domain = aoc$label)
-
-  # Oyster leases palette
-  leases_pal        <- colorFactor(c("hotpink"),   domain = oyster_leases$label)
-
-  # Land water legend color palette + label
-  land_label        <- "2023 MP Land (Year 1)"
-  land_pal          <- colorFactor(c("grey"),   domain = land_sf$label)
-
-  # HSI 2017 500m grid color + labels
-  vect <- 0:1
-  hsi_pal           <- colorNumeric(viridis(n =20), domain = vect, na.color = NA,
-                                    reverse = F)
-  hsi_pal2          <- colorNumeric(viridis(n =20), domain = values(hsi_2017), na.color = NA,
-                                    reverse = F)
-  # hsi_pal          <- colorNumeric(viridis(n =20), domain = vect, na.color = NA, reverse = T)
-  # hsi_pal2          <- colorNumeric(viridis(n =20), domain = values(hsi_2017), na.color = NA, reverse = T)
-
-  # ==================================
-  # ----------- LEAFLET MAP ----------
-  # ==================================
-  leaflet() %>%
-    addProviderTiles(providers$Esri.WorldImagery, group = "Imagery") %>%
-    addProviderTiles(providers$Esri.OceanBasemap, group = "Topographic") %>%
-    addProviderTiles(providers$Esri.NatGeoWorldMap, group = "Nat. Geo. Topographic") %>%
-    addScaleBar("bottomleft") %>%
-    addMeasure(position = "bottomright", primaryLengthUnit = "feet",
-               primaryAreaUnit = "sqmiles", activeColor = "red", completedColor = "green") %>%
-    leafem::addMouseCoordinates() %>%
-    setView(lng = -91.47, lat = 30.295, zoom = 8) %>%
-    addPolygons(
-      data               = ldh,
-      fillColor          = ~ factpal(Status),
-      fillOpacity        = 0.2,
-      color              = ~ factpal(Status),
-      weight             = 3,
-      opacity            = 1,
-      label              = ~ Status,
-      group              = "Oyster harvest areas",
-      highlightOptions   = highlightOptions(
-        opacity      = 1,
-        weight       = 6,
-        bringToFront = TRUE
-      )
-    ) %>%
-    addLegend(
-      pal                = factpal,
-      position           = "topleft",
-      title              ='Oyster harvest areas status',
-      values             = ldh$Status,
-      group              = "Oyster harvest areas",
-      layerId            = "Oyster harvest areas") %>%
-    addPolygons(
-      data               = oyster_leases,
-      fillColor          = "hotpink",
-      fillOpacity        = 0.2,
-      color              = "hotpink",
-      weight             = 2,
-      opacity            = 1,
-      label              = ~label,
-      group              = "Oyster leases",
-      highlightOptions   = highlightOptions(
-        opacity      = 1,
-        weight       = 6,
-        bringToFront = TRUE
-      )
-    ) %>%
-    addLegend(
-      pal                = leases_pal,
-      position           = "topleft",
-      values             =  oyster_leases$label,
-      group              =  "Oyster leases",
-      layerId            =  "Oyster leases") %>%
-    addPolygons(
-      data               = aoc,
-      fillColor          = ~aoc_pal(label),
-      fillOpacity        = 0.2,
-      color              = ~aoc_pal(label),
-      highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE),
-      weight             = 3,
-      opacity            = 1,
-      label              = ~label, group = "AOC permitted areas") %>%
-    addLegend(
-      pal                = aoc_pal,
-      position           = "topleft",
-      # title            = "AOC permitted areas",
-      values             = aoc$label,
-      group              = "AOC permitted areas",
-      layerId            = "AOC permitted areas") %>%
-    addRasterImage(
-      sowb,
-      colors             = "#00bfb2",
-      opacity            = 0.7,
-      group              = "State owned water bottoms") %>% # colors  = if (raster::is.factor(fetch_cat7)) "Set1" else "YlGnBu",
-    addLegend(
-      pal                = sowb_pal,
-      position           = "topleft",
-      values             = sowb_label,
-      group              = "State owned water bottoms",
-      layerId            = "State owned water bottoms"
-    ) %>%
-    addRasterImage(
-      cup,
-      colors             = "#EAC435",
-      opacity            = 0.7,
-      group              = "Coastal Use Permits") %>%   # colors  = if (raster::is.factor(fetch_cat7)) "Set1" else "YlGnBu",
-    addLegend(
-      pal                = cup_pal,
-      position           = "topleft",
-      values             = cup_label,
-      group              = "Coastal Use Permits",
-      layerId            = "Coastal Use Permits"
-    ) %>%
-    addPolygons(
-      data               = cpra_projects,
-      fillColor          = ~cpra_proj_pal(type),
-      color              = ~cpra_proj_pal(type),
-      fillOpacity        = 0.2,
-      weight             = 3,
-      opacity            = 1,
-      label              = ~proj_name,
-      group              = "CPRA projects",
-      popup              = paste(
-        "<b>Project ID: </b> ", cpra_projects$proj_id, "<br>",
-        "<b>Project name: </b>", cpra_projects$proj_name, "<br>",
-        "<b>Structure status: </b>", cpra_projects$struc_clas, "<br>",
-        "<b>Structure class: </b>", cpra_projects$struc_stat, "<br>",
-        "<b>Construction date: </b>", cpra_projects$const_date, "<br>"),
-      highlightOptions   = highlightOptions(
-        opacity      = 1,
-        weight       = 6,
-        bringToFront = TRUE
-      )) %>%  # colors  = if (raster::is.factor(fetch_cat7)) "Set1" else "YlGnBu",
-    addLegend(
-      pal                = cpra_proj_pal,
-      position           = "topleft",
-      values             = cpra_projects$type,
-      group              = "CPRA projects",
-      layerId            = "CPRA projects"
-    ) %>%
-    # addRasterImage(
-    #   cpra_projects,
-    #   colors    = "hotpink", opacity   = 0.7,
-    #   group     = "CPRA projects") %>%   # colors  = if (raster::is.factor(fetch_cat7)) "Set1" else "YlGnBu",
-    # addLegend(
-    #   pal       = cpra_proj_pal,
-    #   position  = "topleft", values    = cpra_proj_label,
-    #   group     = "CPRA projects",  layerId   = "CPRA projects") %>%
-    addRasterImage(
-      fetch_cat7,
-      opacity            = 0.8,
-      colors             = turbo_pal,
-      group              = "Fetch") %>%
-    addLegend(
-      pal                = fetch_fact,
-      position           = "bottomright",
-      title              = "Fetch",
-      labFormat          = labelFormat(suffix = " km"),
-      group              = "Fetch",
-      layerId            = "Fetch",
-      values             = fetch_cols$fetch_cols
-    ) %>%
-    addRasterImage(
-      sal3,
-      opacity            = 0.8,
-      colors             = sal_pal,
-      group              = "2023 MP Mean annual salinity (Year 1)") %>%
-    addRasterImage(
-      sal10,
-      opacity            = 0.8,
-      colors             = sal_pal,
-      group              = "2023 MP Mean annual salinity (Year 8)") %>%
-    addLegend(
-      pal                = sal_pal,
-      title              = "2023 MP Mean annual salinity (Year 1)",
-      position           = "bottomright",
-      labFormat          = labelFormat(suffix = " g/L"),
-      group              = "2023 MP Mean annual salinity (Year 1)",
-      layerId            = "2023 MP Mean annual salinity (Year 1)",
-      values             = sal_cols$numeric_cols
-    ) %>%
-    addLegend(
-      pal                = sal_pal,
-      title              = "2023 MP Mean annual salinity (Year 8)",
-      position           = "bottomright",
-      labFormat          = labelFormat(suffix = " g/L"),
-      group              = "2023 MP Mean annual salinity (Year 8)",
-      layerId            = "2023 MP Mean annual salinity (Year 8)",
-      values             = sal_cols$numeric_cols
-    ) %>%
-    addRasterImage(
-      depth1,
-      opacity            = 0.8,
-      colors             =  brewer.pal(9, "Spectral"),  # colors = c(brewer.pal(11, "Spectral")[c(2, 6)],"#5E4FA2"),
-      group              = "2023 MP Depth (Year 1)"
-    ) %>%
-    addLegend(
-      pal                = depth_fact_pal,
-      title              = "2023 MP Depth (Year 1)",
-      position           = "bottomleft",
-      group              = "2023 MP Depth (Year 1)",
-      layerId            = "2023 MP Depth (Year 1)",
-      values             = depth_labels
-    ) %>%
-    addRasterImage(
-      wlvl_clamp,
-      colors             = wlvl_pal,
-      opacity            = 0.8,
-      group              = "Water level variability (2021)") %>%
-    addLegend(
-      pal                = wlvl_pal,
-      labFormat          = labelFormat(suffix = " m"),
-      title              = "Water level variability (2021)",
-      position           = "bottomleft",
-      group              = "Water level variability (2021)",
-      layerId            = "Water level variability (2021)",
-      values             = values(wlvl_clamp)) %>%
-    addRasterImage(
-      hsi_2017,
-      colors             = hsi_pal2,
-      opacity            = 0.8,
-      group              = "2017 MP Oyster HSI (FWOA, S04, Year 3)") %>%
-    addLegend(
-      pal                = hsi_pal,
-      title              = "2017 MP Oyster HSI (FWOA, S04, Year 3)", position  = "bottomright",
-      group              = "2017 MP Oyster HSI (FWOA, S04, Year 3)", layerId   = "2017 MP Oyster HSI (FWOA, S04, Year 3)", values = vect) %>%
-    addPolylines(
-      data               = road_buffer[4,],
-      fillColor          = 'transparent',  col   = "red", opacity  = 1, weight  = 3,
-      label              = ~road_buffer$buffer_dist[4], group = "Road buffer 20km",
-      highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE)) %>%
-    addPolylines(
-      data               = road_buffer[3,],
-      fillColor          = 'transparent', col   = "red", opacity = 1, weight  = 3,
-      label              = ~road_buffer$buffer_dist[3],  group = "Road buffer 10km",
-      highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE)) %>%
-    addPolylines(
-      data               = road_buffer[2,],
-      fillColor          = 'transparent',  col   = "red", opacity     = 1,  weight  = 3,
-      label              = ~road_buffer$buffer_dist[2], group = "Road buffer 5km",
-      highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE)) %>%
-    addPolylines(
-      data               = road_buffer[1,],
-      fillColor          = 'transparent', col  = "red",opacity  = 1, weight  = 3,
-      label              = ~road_buffer$buffer_dist[1],  group = "Road buffer 2km",
-      highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE)) %>%
-    addPolygons(
-      data               = waterways,
-      fillColor          = "dodgerblue", weight = 2, fillOpacity = 0.7, color = "white",
-      highlightOptions   = highlightOptions(color = "white", opacity = 1, weight = 4, bringToFront = TRUE),
-      label              = ~label,  group = "USACE navigation channels") %>%
-    addLegend(
-      pal                = waterways_pal,
-      position           = "topleft", values = waterways_label,
-      group              = "USACE navigation channels",
-      layerId            = "USACE navigation channels") %>%
-    addPolygons(
-      data               = land_sf,
-      fillColor          = 'white', fillOpacity =  0.4,
-      col                = "black", opacity  = 1, weight  = 1.5,
-      group              = "2023 MP Land (Year 1)", label = ~label) %>%
-    addLegend(
-      pal                = land_pal,
-      position           = "topleft", values = land_label,
-      group              = "2023 MP Land (Year 1)",
-      layerId            = "2023 MP Land (Year 1)") %>%
-    addLayersControl(
-      options = layersControlOptions(collapsed = TRUE),
-      baseGroups = c("Imagery", "Topographic", "Nat. Geo. Topographic"),
-      overlayGroups = c(
-          "2023 MP Mean annual salinity (Year 1)",
-          "2023 MP Mean annual salinity (Year 8)",
-          "Fetch",
-          "Water level variability (2021)",
-          "Road buffer 2km",
-          "Road buffer 5km",
-          "Road buffer 10km",
-          "Road buffer 20km",
-          "2023 MP Land (Year 1)",
-          "2023 MP Depth (Year 1)",
-          "Oyster harvest areas",
-          "Oyster leases",
-          "USACE navigation channels",
-          "Coastal Use Permits",
-          "CPRA projects",
-          "State owned water bottoms",
-          "AOC permitted areas",
-          "2017 MP Oyster HSI (FWOA, S04, Year 3)"
-        )) %>%
-    hideGroup(
-      c(
-          "AOC permitted areas", "2023 MP Mean annual salinity (Year 1)",
-          "2023 MP Mean annual salinity (Year 8)", "2017 MP Oyster HSI (FWOA, S04, Year 3)",
-          "2023 MP Depth (Year 1)", "Water level variability (2021)",
-          "Fetch", "Road buffer 2km",
-          "Road buffer 5km", "Road buffer 10km",
-          "Road buffer 20km",  "USACE navigation channels",
-          "CPRA projects", "Coastal Use Permits", "Oyster leases",
-          "State owned water bottoms", "2023 MP Land (Year 1)")
-      )
-}
+# # --- Shiny utils ---
+# basemap <- function(
+#   land_sf,
+#   road_buffer,
+#   cpra_projects,
+#   cup,
+#   ldh,
+#   aoc,
+#   oyster_leases,
+#   sal3,
+#   sal10,
+#   depth1,
+#   wlvl_clamp,
+#   fetch_cat7,
+#   waterways,
+#   sowb,
+#   hsi_2017,  # hsi_sal3, hsi_sal10, hsi_sal3_mask, hsi_sal10_mask,  mask_open,  mask_interm,
+#   pts = NULL
+# ) {
+#
+#   # ==================================
+#   # ---- COLOR PALETTES & LABELS -----
+#   # ==================================
+#
+#   # Fetch color palette + labels
+#   fetch_categories <- length(unique(raster::values(fetch_cat7))) -1
+#   fetch_cols       <- data.frame(fetch_cols = c(1, 2, 3, 4, 5, 10, 20))  # fetch_cols <- data.frame(fetch_cols = 1:fetch_categories)
+#   turbo_pal        <- viridisLite::turbo(n = fetch_categories, direction = -1)
+#   fetch_fact_df    <- fetch_cols %>% mutate(fetch_cols = factor(fetch_cols))
+#   fetch_fact       <- colorFactor(turbo_pal,   domain = fetch_fact_df$fetch_cols)
+#   fetch_labels     <- c("1km", "2m", "3km", "4km", "5km", "10km", "20km")
+#   # fetch_pal      <- colorNumeric(palette = turbo_pal,   domain = fetch_cols$fetch_cols, reverse = TRUE, na.color = NA)
+#   # pal = colorNumeric("Blues", reverse= F, na.color = "#00000000",      domain = unique(values(fetch_rc)))
+#
+#   # Salinity color palette + labels
+#   sal_cols         <- data.frame(numeric_cols = 1:36)
+#   sal_pal          <- colorNumeric('viridis', domain = sal_cols$numeric_cols, na.color = NA, reverse = TRUE)
+#
+#   # Water level variability palatte + labels
+#   wlvl_pal          <- colorNumeric(turbo(n = 20), domain = values(wlvl_clamp), na.color = NA, reverse = F)
+#
+#   # Depth factors color palette + labels
+#   depth_lvl          <- data.frame(numeric_cols = 1:3)
+#   depth_labels       <- c("Too shallow", "Shallow water", "Deep water")
+#   depth_fact_pal     <- colorFactor(brewer.pal(9, "Spectral"), domain = depth_labels, reverse = T)
+#   # depth_fact_pal   <- colorNumeric(mako(n = 3), domain = values(depth1), reverse = T)
+#
+#   # hsi_pal          <- colorNumeric('magma', domain =values(hsi_sal3), na.color = NA, reverse = F)
+#
+#   # LDH factor color palette
+#   factpal          <- colorFactor(c("red", "yellow", "green"),   domain = ldh$Status)
+#
+#   # sowb legend color palette + label
+#   sowb_label       <- "State owned water bottoms"
+#   sowb_pal         <- colorFactor(c("#00bfb2"),   domain = sowb_label)
+#
+#   # Coastal use permits legend color palette + label
+#   cup_label        <- "Coastal use permits"
+#   cup_pal          <- colorFactor(c("#EAC435"),   domain = cup_label)
+#
+#   # CPRA restoration proj legend color palette + label
+#   cpra_proj_label  <- "CPRA projects"
+#   cpra_proj_pal    <- colorFactor(c("green", "orange"),   domain = cpra_projects$type)
+#
+#   # CPRA factor color palette
+#   # cpra_pal          <- colorFactor(c("red", "yellow", "green"),   domain = ldh$Status)
+#
+#   # Navigablewaterways legend color palette + label
+#   waterways_label  <- "USACE navigation channels"
+#   waterways_pal    <- colorFactor(c("dodgerblue"), domain = waterways_label)
+#
+#   # Mask open legend color palette + label
+#   # mask_open_label          <- "Full mask (LDH open)"
+#   # mask_open_pal            <- colorFactor(c("grey"),   domain = mask_open_label)
+#
+#   # Mask open + interm. legend color palette + label
+#   # mask_interm_label        <- "Full mask (LDH open & intermed.)"
+#   # mask_interm_pal          <- colorFactor(c("grey"),   domain = mask_interm_label)
+#
+#   # AOC active/not active factor color palette
+#   aoc_pal          <- colorFactor(c("darkorange"),   domain = aoc$label)
+#
+#   # Oyster leases palette
+#   leases_pal        <- colorFactor(c("hotpink"),   domain = oyster_leases$label)
+#
+#   # Land water legend color palette + label
+#   land_label        <- "2023 MP Land (Year 1)"
+#   land_pal          <- colorFactor(c("grey"),   domain = land_sf$label)
+#
+#   # HSI 2017 500m grid color + labels
+#   vect <- 0:1
+#   hsi_pal           <- colorNumeric(viridis(n =20), domain = vect, na.color = NA,
+#                                     reverse = F)
+#   hsi_pal2          <- colorNumeric(viridis(n =20), domain = values(hsi_2017), na.color = NA,
+#                                     reverse = F)
+#   # hsi_pal          <- colorNumeric(viridis(n =20), domain = vect, na.color = NA, reverse = T)
+#   # hsi_pal2          <- colorNumeric(viridis(n =20), domain = values(hsi_2017), na.color = NA, reverse = T)
+#
+#   # ==================================
+#   # ----------- LEAFLET MAP ----------
+#   # ==================================
+#   leaflet() %>%
+#     addProviderTiles(providers$Esri.WorldImagery, group = "Imagery") %>%
+#     addProviderTiles(providers$Esri.OceanBasemap, group = "Topographic") %>%
+#     addProviderTiles(providers$Esri.NatGeoWorldMap, group = "Nat. Geo. Topographic") %>%
+#     addScaleBar("bottomleft") %>%
+#     addMeasure(position = "bottomright", primaryLengthUnit = "feet",
+#                primaryAreaUnit = "sqmiles", activeColor = "red", completedColor = "green") %>%
+#     leafem::addMouseCoordinates() %>%
+#     setView(lng = -91.47, lat = 30.295, zoom = 8) %>%
+#     addPolygons(
+#       data               = ldh,
+#       fillColor          = ~ factpal(Status),
+#       fillOpacity        = 0.2,
+#       color              = ~ factpal(Status),
+#       weight             = 3,
+#       opacity            = 1,
+#       label              = ~ Status,
+#       group              = "Oyster harvest areas",
+#       highlightOptions   = highlightOptions(
+#         opacity      = 1,
+#         weight       = 6,
+#         bringToFront = TRUE
+#       )
+#     ) %>%
+#     addLegend(
+#       pal                = factpal,
+#       position           = "topleft",
+#       title              ='Oyster harvest areas status',
+#       values             = ldh$Status,
+#       group              = "Oyster harvest areas",
+#       layerId            = "Oyster harvest areas") %>%
+#     addPolygons(
+#       data               = oyster_leases,
+#       fillColor          = "hotpink",
+#       fillOpacity        = 0.2,
+#       color              = "hotpink",
+#       weight             = 2,
+#       opacity            = 1,
+#       label              = ~label,
+#       group              = "Oyster leases",
+#       highlightOptions   = highlightOptions(
+#         opacity      = 1,
+#         weight       = 6,
+#         bringToFront = TRUE
+#       )
+#     ) %>%
+#     addLegend(
+#       pal                = leases_pal,
+#       position           = "topleft",
+#       values             =  oyster_leases$label,
+#       group              =  "Oyster leases",
+#       layerId            =  "Oyster leases") %>%
+#     addPolygons(
+#       data               = aoc,
+#       fillColor          = ~aoc_pal(label),
+#       fillOpacity        = 0.2,
+#       color              = ~aoc_pal(label),
+#       highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE),
+#       weight             = 3,
+#       opacity            = 1,
+#       label              = ~label, group = "AOC permitted areas") %>%
+#     addLegend(
+#       pal                = aoc_pal,
+#       position           = "topleft",
+#       # title            = "AOC permitted areas",
+#       values             = aoc$label,
+#       group              = "AOC permitted areas",
+#       layerId            = "AOC permitted areas") %>%
+#     addRasterImage(
+#       sowb,
+#       colors             = "#00bfb2",
+#       opacity            = 0.7,
+#       group              = "State owned water bottoms") %>% # colors  = if (raster::is.factor(fetch_cat7)) "Set1" else "YlGnBu",
+#     addLegend(
+#       pal                = sowb_pal,
+#       position           = "topleft",
+#       values             = sowb_label,
+#       group              = "State owned water bottoms",
+#       layerId            = "State owned water bottoms"
+#     ) %>%
+#     addRasterImage(
+#       cup,
+#       colors             = "#EAC435",
+#       opacity            = 0.7,
+#       group              = "Coastal Use Permits") %>%   # colors  = if (raster::is.factor(fetch_cat7)) "Set1" else "YlGnBu",
+#     addLegend(
+#       pal                = cup_pal,
+#       position           = "topleft",
+#       values             = cup_label,
+#       group              = "Coastal Use Permits",
+#       layerId            = "Coastal Use Permits"
+#     ) %>%
+#     addPolygons(
+#       data               = cpra_projects,
+#       fillColor          = ~cpra_proj_pal(type),
+#       color              = ~cpra_proj_pal(type),
+#       fillOpacity        = 0.2,
+#       weight             = 3,
+#       opacity            = 1,
+#       label              = ~proj_name,
+#       group              = "CPRA projects",
+#       popup              = paste(
+#         "<b>Project ID: </b> ", cpra_projects$proj_id, "<br>",
+#         "<b>Project name: </b>", cpra_projects$proj_name, "<br>",
+#         "<b>Structure status: </b>", cpra_projects$struc_clas, "<br>",
+#         "<b>Structure class: </b>", cpra_projects$struc_stat, "<br>",
+#         "<b>Construction date: </b>", cpra_projects$const_date, "<br>"),
+#       highlightOptions   = highlightOptions(
+#         opacity      = 1,
+#         weight       = 6,
+#         bringToFront = TRUE
+#       )) %>%  # colors  = if (raster::is.factor(fetch_cat7)) "Set1" else "YlGnBu",
+#     addLegend(
+#       pal                = cpra_proj_pal,
+#       position           = "topleft",
+#       values             = cpra_projects$type,
+#       group              = "CPRA projects",
+#       layerId            = "CPRA projects"
+#     ) %>%
+#     # addRasterImage(
+#     #   cpra_projects,
+#     #   colors    = "hotpink", opacity   = 0.7,
+#     #   group     = "CPRA projects") %>%   # colors  = if (raster::is.factor(fetch_cat7)) "Set1" else "YlGnBu",
+#     # addLegend(
+#     #   pal       = cpra_proj_pal,
+#     #   position  = "topleft", values    = cpra_proj_label,
+#     #   group     = "CPRA projects",  layerId   = "CPRA projects") %>%
+#     addRasterImage(
+#       fetch_cat7,
+#       opacity            = 0.8,
+#       colors             = turbo_pal,
+#       group              = "Fetch") %>%
+#     addLegend(
+#       pal                = fetch_fact,
+#       position           = "bottomright",
+#       title              = "Fetch",
+#       labFormat          = labelFormat(suffix = " km"),
+#       group              = "Fetch",
+#       layerId            = "Fetch",
+#       values             = fetch_cols$fetch_cols
+#     ) %>%
+#     addRasterImage(
+#       sal3,
+#       opacity            = 0.8,
+#       colors             = sal_pal,
+#       group              = "2023 MP Mean annual salinity (Year 1)") %>%
+#     addRasterImage(
+#       sal10,
+#       opacity            = 0.8,
+#       colors             = sal_pal,
+#       group              = "2023 MP Mean annual salinity (Year 8)") %>%
+#     addLegend(
+#       pal                = sal_pal,
+#       title              = "2023 MP Mean annual salinity (Year 1)",
+#       position           = "bottomright",
+#       labFormat          = labelFormat(suffix = " g/L"),
+#       group              = "2023 MP Mean annual salinity (Year 1)",
+#       layerId            = "2023 MP Mean annual salinity (Year 1)",
+#       values             = sal_cols$numeric_cols
+#     ) %>%
+#     addLegend(
+#       pal                = sal_pal,
+#       title              = "2023 MP Mean annual salinity (Year 8)",
+#       position           = "bottomright",
+#       labFormat          = labelFormat(suffix = " g/L"),
+#       group              = "2023 MP Mean annual salinity (Year 8)",
+#       layerId            = "2023 MP Mean annual salinity (Year 8)",
+#       values             = sal_cols$numeric_cols
+#     ) %>%
+#     addRasterImage(
+#       depth1,
+#       opacity            = 0.8,
+#       colors             =  brewer.pal(9, "Spectral"),  # colors = c(brewer.pal(11, "Spectral")[c(2, 6)],"#5E4FA2"),
+#       group              = "2023 MP Depth (Year 1)"
+#     ) %>%
+#     addLegend(
+#       pal                = depth_fact_pal,
+#       title              = "2023 MP Depth (Year 1)",
+#       position           = "bottomleft",
+#       group              = "2023 MP Depth (Year 1)",
+#       layerId            = "2023 MP Depth (Year 1)",
+#       values             = depth_labels
+#     ) %>%
+#     addRasterImage(
+#       wlvl_clamp,
+#       colors             = wlvl_pal,
+#       opacity            = 0.8,
+#       group              = "Water level variability (2021)") %>%
+#     addLegend(
+#       pal                = wlvl_pal,
+#       labFormat          = labelFormat(suffix = " m"),
+#       title              = "Water level variability (2021)",
+#       position           = "bottomleft",
+#       group              = "Water level variability (2021)",
+#       layerId            = "Water level variability (2021)",
+#       values             = values(wlvl_clamp)) %>%
+#     addRasterImage(
+#       hsi_2017,
+#       colors             = hsi_pal2,
+#       opacity            = 0.8,
+#       group              = "2017 MP Oyster HSI (FWOA, S04, Year 3)") %>%
+#     addLegend(
+#       pal                = hsi_pal,
+#       title              = "2017 MP Oyster HSI (FWOA, S04, Year 3)", position  = "bottomright",
+#       group              = "2017 MP Oyster HSI (FWOA, S04, Year 3)", layerId   = "2017 MP Oyster HSI (FWOA, S04, Year 3)", values = vect) %>%
+#     addPolylines(
+#       data               = road_buffer[4,],
+#       fillColor          = 'transparent',  col   = "red", opacity  = 1, weight  = 3,
+#       label              = ~road_buffer$buffer_dist[4], group = "Road buffer 20km",
+#       highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE)) %>%
+#     addPolylines(
+#       data               = road_buffer[3,],
+#       fillColor          = 'transparent', col   = "red", opacity = 1, weight  = 3,
+#       label              = ~road_buffer$buffer_dist[3],  group = "Road buffer 10km",
+#       highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE)) %>%
+#     addPolylines(
+#       data               = road_buffer[2,],
+#       fillColor          = 'transparent',  col   = "red", opacity     = 1,  weight  = 3,
+#       label              = ~road_buffer$buffer_dist[2], group = "Road buffer 5km",
+#       highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE)) %>%
+#     addPolylines(
+#       data               = road_buffer[1,],
+#       fillColor          = 'transparent', col  = "red",opacity  = 1, weight  = 3,
+#       label              = ~road_buffer$buffer_dist[1],  group = "Road buffer 2km",
+#       highlightOptions   = highlightOptions(color = "red", opacity = 1, weight = 7, bringToFront = TRUE)) %>%
+#     addPolygons(
+#       data               = waterways,
+#       fillColor          = "dodgerblue", weight = 2, fillOpacity = 0.7, color = "white",
+#       highlightOptions   = highlightOptions(color = "white", opacity = 1, weight = 4, bringToFront = TRUE),
+#       label              = ~label,  group = "USACE navigation channels") %>%
+#     addLegend(
+#       pal                = waterways_pal,
+#       position           = "topleft", values = waterways_label,
+#       group              = "USACE navigation channels",
+#       layerId            = "USACE navigation channels") %>%
+#     addPolygons(
+#       data               = land_sf,
+#       fillColor          = 'white', fillOpacity =  0.4,
+#       col                = "black", opacity  = 1, weight  = 1.5,
+#       group              = "2023 MP Land (Year 1)", label = ~label) %>%
+#     addLegend(
+#       pal                = land_pal,
+#       position           = "topleft", values = land_label,
+#       group              = "2023 MP Land (Year 1)",
+#       layerId            = "2023 MP Land (Year 1)") %>%
+#     addLayersControl(
+#       options = layersControlOptions(collapsed = TRUE),
+#       baseGroups = c("Imagery", "Topographic", "Nat. Geo. Topographic"),
+#       overlayGroups = c(
+#           "2023 MP Mean annual salinity (Year 1)",
+#           "2023 MP Mean annual salinity (Year 8)",
+#           "Fetch",
+#           "Water level variability (2021)",
+#           "Road buffer 2km",
+#           "Road buffer 5km",
+#           "Road buffer 10km",
+#           "Road buffer 20km",
+#           "2023 MP Land (Year 1)",
+#           "2023 MP Depth (Year 1)",
+#           "Oyster harvest areas",
+#           "Oyster leases",
+#           "USACE navigation channels",
+#           "Coastal Use Permits",
+#           "CPRA projects",
+#           "State owned water bottoms",
+#           "AOC permitted areas",
+#           "2017 MP Oyster HSI (FWOA, S04, Year 3)"
+#         )) %>%
+#     hideGroup(
+#       c(
+#           "AOC permitted areas", "2023 MP Mean annual salinity (Year 1)",
+#           "2023 MP Mean annual salinity (Year 8)", "2017 MP Oyster HSI (FWOA, S04, Year 3)",
+#           "2023 MP Depth (Year 1)", "Water level variability (2021)",
+#           "Fetch", "Road buffer 2km",
+#           "Road buffer 5km", "Road buffer 10km",
+#           "Road buffer 20km",  "USACE navigation channels",
+#           "CPRA projects", "Coastal Use Permits", "Oyster leases",
+#           "State owned water bottoms", "2023 MP Land (Year 1)")
+#       )
+# }
 # --- Shiny utils --
 cv_basemap <- function(
   si_road,
@@ -564,12 +564,17 @@ cv_basemap <- function(
         "Deep water CV (Year 1)")
     ) %>%
     addBootstrapDependency() %>% # Add Bootstrap to be able to use a modal
-    # addEasyButton(easyButton(icon = htmltools::span(class = "star", htmltools::HTML("&starf;")),onClick = JS("function(btn, map){ map.setZoom(1);}"))) %>%
-    addEasyButton(easyButton(
-      icon = "fa-info-circle", title = "Meta data", position = "topright",
-      onClick = JS("function(btn, map){ $('#infobox1').modal('show'); }")
-    )) %>%
-    htmlwidgets::appendContent(cv_info_box)
+    addEasyButton(
+      easyButton(
+        icon     = "fa-info-circle",
+        title    = "Meta data",
+        position = "topright",
+        id = "info_button",
+        onClick = JS("
+              function(btn, map) {
+                Shiny.onInputChange('cv_info_button', Math.random());
+              }"
+        )))
 }
 
 # ---- Shiny utils ---
@@ -583,51 +588,51 @@ ov_basemap <- function(
   {
 
   # ---- OV INFO BUTTON ----
-  ov_info_box <- HTML(paste0(
-    HTML(
-      '<div class="modal fade" id="infobox" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
-    ),
-
-    # Header / Title
-    HTML("<strong>Meta data</strong>"),
-    HTML(
-      '</div><div class="modal-body">'
-    ),
-    HTML('
-<table class="table">
-      <thead>
-        <tr>
-          <th scope="col">Layer</th>
-          <th scope="col">Description</th>
-          </tr>
-        </thead>
-        <tbody>
-         <tr>
-            <td><strong>Cool month min salinity</strong></td>
-            <td>Suitability index based on cool month minimum salinity </td>
-            </tr>
-         <tr>
-            <td><strong>Warm month min salinity</strong></td>
-            <td> Suitability index based on warm month minimum salinity</td>
-         </tr>
-         <tr>
-            <td><strong>Annual mean salinity</strong></td>
-            <td> Suitability index based on annual average salinity </td>
-         </tr>
-         <tr>
-            <td><strong>SI MS</strong></td>
-            <td>Suitability index based on combination of cool and warm month minimum salinity</td>
-         </tr>
-         <tr>
-            <td><strong>SI OV</td>
-            <td>Oyster viability index based on cool and warm month minimum salinity and annual average salinity</td>
-         </tr>
-    </tbody>
-</table>'
-    ),
-    # Closing divs
-    HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
-  ))
+#   ov_info_box <- HTML(paste0(
+#     HTML(
+#       '<div class="modal fade" id="infobox" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
+#     ),
+#
+#     # Header / Title
+#     HTML("<strong>Meta data</strong>"),
+#     HTML(
+#       '</div><div class="modal-body">'
+#     ),
+#     HTML('
+# <table class="table">
+#       <thead>
+#         <tr>
+#           <th scope="col">Layer</th>
+#           <th scope="col">Description</th>
+#           </tr>
+#         </thead>
+#         <tbody>
+#          <tr>
+#             <td><strong>Cool month min salinity</strong></td>
+#             <td>Suitability index based on cool month minimum salinity </td>
+#             </tr>
+#          <tr>
+#             <td><strong>Warm month min salinity</strong></td>
+#             <td> Suitability index based on warm month minimum salinity</td>
+#          </tr>
+#          <tr>
+#             <td><strong>Annual mean salinity</strong></td>
+#             <td> Suitability index based on annual average salinity </td>
+#          </tr>
+#          <tr>
+#             <td><strong>SI MS</strong></td>
+#             <td>Suitability index based on combination of cool and warm month minimum salinity</td>
+#          </tr>
+#          <tr>
+#             <td><strong>SI OV</td>
+#             <td>Oyster viability index based on cool and warm month minimum salinity and annual average salinity</td>
+#          </tr>
+#     </tbody>
+# </table>'
+#     ),
+#     # Closing divs
+#     HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
+#   ))
 
   # ---- COLOR PALETTES & LABELS -----
 
@@ -655,22 +660,22 @@ ov_basemap <- function(
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "SI sal cool (Year 1)",
-      layerId     = "SI sal cool (Year 1)") %>%
+      group     = "Cool month min salinity (Year 1)",
+      layerId     = "Cool month min salinity (Year 1)") %>%
     addRasterImage(
       si_sal$si_sal_warm,
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "SI sal warm (Year 1)",
-      layerId     = "SI sal warm (Year 1)") %>%
+      group     = "Warm month min salinity (Year 1)",
+      layerId     = "Warm month min salinity (Year 1)") %>%
     addRasterImage(
      si_sal$si_sal_avg,
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "SI sal avg (Year 1)",
-      layerId     = "SI sal avg (Year 1)") %>%
+      group     = "Annual mean salinity (Year 1)",
+      layerId     = "Annual mean salinity (Year 1)") %>%
     addRasterImage(
       si_ms,
       project   = T,
@@ -689,20 +694,20 @@ ov_basemap <- function(
       pal       = si_pal,
       position  = "bottomleft",
       values    = vect,
-      title     = "SI sal cool (Year 1)",
-      group     = "SI sal cool (Year 1)",  layerId   = "SI sal cool (Year 1)") %>%
+      title     = "Cool month min salinity (Year 1)",
+      group     = "Cool month min salinity (Year 1)",  layerId   = "Cool month min salinity (Year 1)") %>%
     addLegend(
       pal       = si_pal,
       position  = "bottomleft",
       values    = vect,
-      title     = "SI sal warm (Year 1)",
-      group     = "SI sal warm (Year 1)",  layerId   = "SI sal warm (Year 1)") %>%
+      title     = "Warm month min salinity (Year 1)",
+      group     = "Warm month min salinity (Year 1)",  layerId   = "Warm month min salinity (Year 1)") %>%
     addLegend(
       pal       = si_pal,
       position  = "bottomleft",
       values    = vect,
-      title     = "SI sal avg (Year 1)",
-      group     = "SI sal avg (Year 1)",  layerId   = "SI sal avg (Year 1)") %>%
+      title     = "Annual mean salinity (Year 1)",
+      group     = "Annual mean salinity (Year 1)",  layerId   = "Annual mean salinity (Year 1)") %>%
     addLegend(
       pal       = si_pal,
       position  = "bottomleft",
@@ -716,15 +721,15 @@ ov_basemap <- function(
       title     = "SI OV (Year 1)",
       group     = "SI OV (Year 1)",  layerId   = "SI OV (Year 1)") %>%
     # addImageQuery(sal_cool$salinity_min_cool_03_03, digits    = 2, position  = "bottomright",
-    #               layerId   = "SI sal cool (Year 1)") %>%
+    #               layerId   = "Cool month min salinity (Year 1)") %>%
     # addImageQuery(sal_cool$salinity_min_cool_10_10, digits    = 2, position  = "bottomright",
     #               layerId   = "Sal SI cool (Year 8)") %>%
     # addImageQuery(sal_warm$salinity_min_warm_03_03, digits    = 2, position  = "bottomright",
-    #               layerId   = "SI sal warm (Year 1)") %>%
+    #               layerId   = "Warm month min salinity (Year 1)") %>%
     # addImageQuery(sal_warm$salinity_min_warm_10_10,  digits    = 2, position  = "bottomright",
     #               layerId   = "Sal SI warm (Year 8)") %>%
     # addImageQuery(sal_avg$salinity_avg_03_03, digits    = 2, position  = "bottomright",
-    #               layerId   = "SI sal avg (Year 1)") %>%
+    #               layerId   = "Annual mean salinity (Year 1)") %>%
     # addImageQuery(sal_avg$salinity_avg_10_10, digits    = 2, position  = "bottomright",
     #               layerId   = "Sal SI avg (Year 8)") %>%
     # addImageQuery(si_ms$si_ms_mask_03_03, digits    = 2, position  = "bottomright",
@@ -739,111 +744,117 @@ ov_basemap <- function(
       options = layersControlOptions(collapsed = TRUE),
       baseGroups = c( "Topographic", "Imagery"),  # "Topographic w/ roads"
       overlayGroups = c(
-        "SI sal cool (Year 1)",
-        "SI sal warm (Year 1)",
-        "SI sal avg (Year 1)",
+        "Cool month min salinity (Year 1)",
+        "Warm month min salinity (Year 1)",
+        "Annual mean salinity (Year 1)",
         "SI MS (Year 1)",
         "SI OV (Year 1)"
       )
     ) %>%
     hideGroup(
       c(
-        "SI sal cool (Year 1)",
-        "SI sal warm (Year 1)",
-        "SI sal avg (Year 1)",
+        "Cool month min salinity (Year 1)",
+        "Warm month min salinity (Year 1)",
+        "Annual mean salinity (Year 1)",
         "SI MS (Year 1)",
         "SI OV (Year 1)"
       )
     ) %>%
     addBootstrapDependency() %>%
-    addEasyButton(easyButton(
-      icon = "fa-info-circle", title = "Meta data", position = "topright",
-      onClick = JS("function(btn, map){ $('#infobox').modal('show'); }")
-    )) %>%
-    htmlwidgets::appendContent(ov_info_box)
-
-}
-# --- Shiny utils --
-test_basemap <- function(
-  pts = NULL
-)
-{
-
-  # ---- OV INFO BUTTON ----
-  info_box <- HTML(paste0(
-    HTML(
-      '<div class="modal fade" id="infobox" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
-    ),
-
-    # Header / Title
-    HTML("<strong>Meta data</strong>"),
-    HTML(
-      '</div><div class="modal-body">'
-    ),
-    HTML('
-<table class="table">
-      <thead>
-        <tr>
-          <th scope="col">Layer</th>
-          <th scope="col">Description</th>
-          </tr>
-        </thead>
-        <tbody>
-         <tr>
-            <td><strong>Cool month min salinity</strong></td>
-            <td>Suitability index based on cool month minimum salinity </td>
-            </tr>
-         <tr>
-            <td><strong>Warm month min salinity</strong></td>
-            <td> Suitability index based on warm month minimum salinity</td>
-         </tr>
-         <tr>
-            <td><strong>Annual mean salinity</strong></td>
-            <td> Suitability index based on annual average salinity </td>
-         </tr>
-         <tr>
-            <td><strong>SI MS</strong></td>
-            <td>Suitability index based on combination of cool and warm month minimum salinity</td>
-         </tr>
-         <tr>
-            <td><strong>SI OV</td>
-            <td>Oyster viability index based on cool and warm month minimum salinity and annual average salinity</td>
-         </tr>
-    </tbody>
-</table>'
-    ),
-    # Closing divs
-    HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
-  ))
-
-
-  # ----------- LEAFLET MAP ----------
-
-  leaflet() %>%
-    addProviderTiles(providers$Esri.OceanBasemap, group = "Topographic") %>%
-    addBootstrapDependency() %>%
-    # addEasyButton(
-    #   easyButton(states = list(
-    #     easyButtonState(
-    #       stateName = 'onestate',
-    #       icon="fa-backward",
-    #       title="Refresh map", #id = "refresh-map",
-    #       onClick = JS(" function(btn, map) { Shiny.onInputChange('my_easy_button', 'modal('show')'); Shiny.onInputChange('my_easy_button', 'free'); }")
-    #     )
-    #   )
-    #   ))
     addEasyButton(
       easyButton(
-       icon     = "fa-info-circle",
-       title    = "Meta data",
-       position = "topright",
-       # onClick  =
-       #   JS('Shiny.onInputChange(\"button_click\", .modal("show")'))
-       onClick  = JS("function(btn, map){ $('#infobox').modal('show');
-              }")
-       ))
-    htmlwidgets::appendContent(info_box)
+        icon     = "fa-info-circle",
+        title    = "Meta data",
+        position = "topright",
+        id = "info_button",
+        onClick = JS("
+              function(btn, map) {
+                Shiny.onInputChange('ov_info_button', Math.random());
+              }"
+        )))
+    # addBootstrapDependency() %>%
+    # addEasyButton(easyButton(
+    #   icon = "fa-info-circle", title = "Meta data", position = "topright",
+    #   onClick = JS("function(btn, map){ $('#infobox').modal('show'); }")
+    # )) %>%
+    # htmlwidgets::appendContent(ov_info_box)
+
 }
+
+# --- Shiny utils --
+# test_basemap2 <- function(
+#   pts = NULL
+# )
+# {
+#
+#
+#   # ----------- LEAFLET MAP ----------
+#   # leaf <- leaflet() %>%
+#   #   addTiles() %>%
+#   #   addEasyButton(easyButton(
+#   #     icon = htmltools::span(class = "star", htmltools::HTML("&starf;")),
+#   #     onClick = JS("function(btn, map){ map.setZoom(1);}")))
+#   # leaf
+#   #
+#   # leaf <- leaflet() %>%
+#   #   addTiles() %>%
+#   #   addEasyButtonBar(
+#   #     easyButton(
+#   #       icon = htmltools::span(class = "star", htmltools::HTML("&starf;")),
+#   #       onClick = JS("function(btn, map){ alert(\"Button 1\");}"))
+#   #     )
+#
+#   leaflet() %>%
+#     addProviderTiles(providers$Esri.OceanBasemap, group = "Topographic") %>%
+#     addBootstrapDependency() %>%
+#     addEasyButton(
+#       easyButton(
+#         icon     = "fa-info-circle",
+#         title    = "Meta data",
+#         position = "topright",
+#         id = "info_button",
+#         onClick = JS("
+#               function(btn, map) {
+#                 Shiny.onInputChange('my_easy_button', Math.random());
+#               }"
+#         )))
+#     # addEasyButton(
+#     #   easyButton(
+#     #     icon     = "fa-info-circle",
+#     #     title    = "Meta data",
+#     #     position = "topright",
+#     #     id = "info_button",
+#     #     onClick = JS("
+#     #           function(btn, map) {
+#     #             Shiny.onInputChange('my_easy_button', 'frozen');
+#     #             Shiny.onInputChange('my_easy_button', Math.random());
+#     #           }"
+#     #     )))
+# }
+
+    # addEasyButton(
+    #   easyButton(
+    #     icon     = "fa-info-circle",
+    #     title    = "Meta data",
+    #     position = "topright",
+    #     id = "info_button",
+    #     # onClick  =
+    #     #   JS('Shiny.onInputChange(\"button_click\", .modal("show")'))
+    #     onClick = JS("
+    #      function(btn, map) {
+    #             Shiny.onInputChange('my_easy_button', 'clicked');
+    #           }"
+    #     )
+    #     # onClick  = JS("function(btn, map){ $('#infobox').modal('show');
+    #     #       }")
+    #     ))
+    # htmlwidgets::onRender("function(btn, map){ $('#infobox').modal('show');
+    #           }")
+    # htmlwidgets::appendContent(info_box)
+    # widgetframe::frameWidget()
+
+# }
+
 
 
 # library(leaflet)
@@ -910,58 +921,59 @@ aoc_basemap <- function(
   waterways,
   sowb,
   cup,
+  cpra_projects,
   pts = NULL
 ) {
   # ---- AOC Info button ----
-  aoc_info_box <- HTML(paste0(
-    HTML(
-      '<div class="modal fade" id="infobox2" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
-    ),
-
-    # Header / Title
-    HTML("<strong>Meta data</strong>"),
-    HTML(
-      '</div><div class="modal-body">'
-    ),
-    HTML('
-      <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">Layer</th>
-                <th scope="col">Description</th>
-                </tr>
-              </thead>
-              <tbody>
-               <tr>
-                  <td><strong>AOC Shallow</strong></td>
-                  <td>AOC suitability index for shallow water operations based on oyster viability and commercial viability</td>
-                  </tr>
-               <tr>
-                  <td><strong>AOC Deep</strong></td>
-                  <td>AOC suitability index for deep water operations based on oyster viability and commercial viability </td>
-               </tr>
-               <tr>
-                  <td><strong>USACE Navigation Channels</strong></td>
-                  <td>Reference layer showing navigation channels, which may create regulatory limitations on AOC operations</td>
-               </tr>
-               <tr>
-                  <td><strong>State owned water bottoms</strong></td>
-                  <td>Reference layer showing state owned water bottoms, where AOC operations would be allowed</td>
-               </tr>
-               <tr>
-                  <td><strong>Coastal Use Permits</strong></td>
-                  <td>Reference layer showing coastal use permits, which may create regulatory limits on AOC operations </td>
-               </tr>
-               <tr>
-                  <td><strong>CPRA Projects</strong></td>
-                  <td>Reference layer showing integrated protection projects, which may create regulatory limitations on AOC operations</td>
-               </tr>
-          </tbody>
-      </table>'
-    ),
-    # Closing divs
-    HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
-  ))
+  # aoc_info_box <- HTML(paste0(
+  #   HTML(
+  #     '<div class="modal fade" id="infobox2" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
+  #   ),
+  #
+  #   # Header / Title
+  #   HTML("<strong>Meta data</strong>"),
+  #   HTML(
+  #     '</div><div class="modal-body">'
+  #   ),
+  #   HTML('
+  #     <table class="table">
+  #           <thead>
+  #             <tr>
+  #               <th scope="col">Layer</th>
+  #               <th scope="col">Description</th>
+  #               </tr>
+  #             </thead>
+  #             <tbody>
+  #              <tr>
+  #                 <td><strong>AOC Shallow</strong></td>
+  #                 <td>AOC suitability index for shallow water operations based on oyster viability and commercial viability</td>
+  #                 </tr>
+  #              <tr>
+  #                 <td><strong>AOC Deep</strong></td>
+  #                 <td>AOC suitability index for deep water operations based on oyster viability and commercial viability </td>
+  #              </tr>
+  #              <tr>
+  #                 <td><strong>USACE Navigation Channels</strong></td>
+  #                 <td>Reference layer showing navigation channels, which may create regulatory limitations on AOC operations</td>
+  #              </tr>
+  #              <tr>
+  #                 <td><strong>State owned water bottoms</strong></td>
+  #                 <td>Reference layer showing state owned water bottoms, where AOC operations would be allowed</td>
+  #              </tr>
+  #              <tr>
+  #                 <td><strong>Coastal Use Permits</strong></td>
+  #                 <td>Reference layer showing coastal use permits, which may create regulatory limits on AOC operations </td>
+  #              </tr>
+  #              <tr>
+  #                 <td><strong>CPRA Projects</strong></td>
+  #                 <td>Reference layer showing integrated protection projects, which may create regulatory limitations on AOC operations</td>
+  #              </tr>
+  #         </tbody>
+  #     </table>'
+  #   ),
+  #   # Closing divs
+  #   HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
+  # ))
   # ---- COLOR PALETTES & LABELS -----
 
   # AOC permitted areas polygon
@@ -973,11 +985,15 @@ aoc_basemap <- function(
 
   # sowb legend color palette + label
   sowb_label       <- "State owned water bottoms"
-  sowb_pal         <- colorFactor(c("black"),   domain = sowb_label)
+  sowb_pal         <- colorFactor(c("green"),   domain = sowb_label)
 
   # Coastal use permits legend color palette + label
   cup_label        <- "Coastal use permits"
-  cup_pal          <- colorFactor(c("black"),   domain = cup_label)
+  cup_pal          <- colorFactor(c("red"),   domain = cup_label)
+
+  # Coastal use permits legend color palette + label
+  cpra_label       <- "CPRA Projects"
+  cpra_pal         <- colorFactor(c("red"),   domain = cpra_label)
 
   # SI value domain
   vect <- seq(0, 1, by = .1)
@@ -1030,14 +1046,19 @@ aoc_basemap <- function(
       group     = "USACE navigation channels") %>%
     addRasterImage(
       sowb,
-      colors    = "black",
+      colors    = "green",
       opacity   = 0.2,
       group     = "State owned water bottoms") %>%
     addRasterImage(
       cup,
-      colors    = "black",
+      colors    = "red",
       opacity   = 0.2,
       group     = "Coastal Use Permits") %>%
+    addRasterImage(
+      cpra_projects,
+      colors    = "red",
+      opacity   = 0.2,
+      group     = "CPRA Projects") %>%
     addLegend(
       pal       = aoc_pal,
       position  = "bottomleft",
@@ -1071,6 +1092,12 @@ aoc_basemap <- function(
       values    = cup_label,
       group     = "Coastal Use Permits",
       layerId   = "Coastal Use Permits") %>%
+    addLegend(
+      pal       = cpra_pal,
+      position  = "topleft",
+      values    = cpra_label,
+      group     = "CPRA Projects",
+      layerId   = "CPRA Projects") %>%
     # addImageQuery(aoc_shallow$aoc_shallow_03_03,
     #               digits    = 2,
     #               position  = "bottomright",
@@ -1084,6 +1111,7 @@ aoc_basemap <- function(
         "USACE navigation channels",
         "State owned water bottoms",
         "Coastal Use Permits",
+        "CPRA Projects",
         "AOC permitted areas"
       )
     ) %>%
@@ -1094,13 +1122,20 @@ aoc_basemap <- function(
         "USACE navigation channels",
         "State owned water bottoms",
         "Coastal Use Permits",
+        "CPRA Projects",
         "AOC permitted areas"
       )) %>%
-    addEasyButton(easyButton(
-      icon = "fa-info-circle", title = "Meta data", position = "topright",
-      onClick = JS("function(btn, map){ $('#infobox2').modal('show'); }")
-    )) %>%
-    htmlwidgets::appendContent(aoc_info_box)
+    addEasyButton(
+      easyButton(
+        icon     = "fa-info-circle",
+        title    = "Meta data",
+        position = "topright",
+        id = "info_button",
+        onClick = JS("
+              function(btn, map) {
+                Shiny.onInputChange('aoc_info_button', Math.random());
+              }"
+        )))
 }
 
 
