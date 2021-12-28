@@ -381,9 +381,6 @@
 # }
 # --- Shiny utils --
 cv_basemap <- function(
-  si_road,
-  si_fetch,
-  si_sed_dep,
   cv,
   pts = NULL
 ) {
@@ -459,7 +456,7 @@ cv_basemap <- function(
     setView(lng = -91.47, lat = 30.295, zoom = 8) %>%
     # # setMaxBounds(lng1 = -95, lat1 = 31, lng2=-87, lat2=28) %>%
     addRasterImage(
-      si_fetch$si_fetch_shallow,
+      cv$si_fetch_shallow,
       # fetch_shallow_mask,
       project   = T,
       colors    = turbo(n =20, direction = -1),  # colors = rc_fetch_pal,
@@ -469,78 +466,78 @@ cv_basemap <- function(
       ) %>%
     addRasterImage(
       # fetch_deep_mask,
-      si_fetch$si_fetch_deep,
+      cv$si_fetch_deep,
       project   = T,
       colors    = turbo(n =20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
       group     = "Fetch SI (Deep)",
       layerId   = "Fetch SI (Deep)") %>%
     addRasterImage(
-      si_road,
+      cv$si_roads,
       project   = T,
       colors    = turbo(n =20, direction = -1),
       opacity   = 0.7,
       group     = "Distance to Roads SI",
       layerId   = "Distance to Roads SI") %>%
     addRasterImage(
-      si_sed_dep,
+      cv$si_sed_dep,
       project   = T,
       colors    = turbo(n =20, direction = -1),
       opacity   = 0.7,
-      group     = "Sediment deposition SI (Year 1)",
-      layerId   = "Sediment deposition SI (Year 1)") %>%
+      group     = "Sediment deposition SI",
+      layerId   = "Sediment deposition SI") %>%
     addRasterImage(
       cv$shallow_cv,
       project     = T,
       colors      = viridisLite::turbo(n = 20, direction = -1),
       opacity     = 0.7,
-      group       = "Shallow water CV (Year 1)",
-      layerId     = "Shallow water CV (Year 1)") %>%
+      group       = "Shallow water CV (Year 8)",
+      layerId     = "Shallow water CV (Year 8)") %>%
     addRasterImage(
       cv$deep_cv,
       project     = T,
       colors      = viridisLite::turbo(n = 20, direction = -1),
       opacity     = 0.7,
-      group       = "Deep water CV (Year 1)",
-      layerId     = "Deep water CV (Year 1)") %>%
+      group       = "Deep water CV (Year 8)",
+      layerId     = "Deep water CV (Year 8)") %>%
     addLegend(
       pal       = reclass_pal,
       position  = "bottomleft",
-      values    = vect,
-      title     = "Fetch SI (Shallow)",
-      group     = "Fetch SI (Shallow)",  layerId   = "Fetch SI (Shallow)") %>%
+      title     = "Fetch SI (Shallow)",        values    = vect,
+      group     = "Fetch SI (Shallow)",        layerId   = "Fetch SI (Shallow)") %>%
     addLegend(
       pal       = reclass_pal,
       position  = "bottomleft",
-      values    = vect,
-      title     = "Fetch SI (Deep)",
-      group     = "Fetch SI (Deep)",  layerId   = "Fetch SI (Deep)") %>%
+      title     = "Fetch SI (Deep)",           values    = vect,
+      group     = "Fetch SI (Deep)",           layerId   = "Fetch SI (Deep)") %>%
     addLegend(
       pal       = reclass_pal,
-      position  = "bottomleft", values    = vect,
-      title     = "Distance to Roads SI",
-      group     = "Distance to Roads SI",  layerId   = "Distance to Roads SI") %>%
+      position  = "bottomleft",
+      title     = "Distance to Roads SI",      values    = vect,
+      group     = "Distance to Roads SI",      layerId   = "Distance to Roads SI") %>%
     addLegend( # Sedimentation Rate CV legend
       pal       = reclass_pal,
-      position  = "bottomleft", values    = vect,
-      title     = "Sed. dep. SI (Year 1)",
-      group     = "Sediment deposition SI (Year 1)",  layerId   = "Sediment deposition SI (Year 1)") %>%
+      position  = "bottomleft",
+      title     = "Sed. dep. SI",              values    = vect,
+      group     = "Sediment deposition SI",    layerId   = "Sediment deposition SI") %>%
     addLegend( # Shallow Water Comm. Viab legend
       pal       = comm_var_pal,
-      title     = "Shallow water CV (Year 1)", position  = "topleft",
-      group     = "Shallow water CV (Year 1)", layerId = "Shallow water CV (Year 1)", values = vect) %>%
+      position  = "topleft",
+      title     = "Shallow water CV (Year 8)", values  = vect,
+      group     = "Shallow water CV (Year 8)", layerId = "Shallow water CV (Year 8)") %>%
     addLegend(
       pal       = comm_var_pal,
-      title     = "Deep water CV (Year 1)", position  = "topleft",
-      group     = "Deep water CV (Year 1)", layerId = "Deep water CV (Year 1)", values = vect) %>%
+      position  = "topleft",
+      title     = "Deep water CV (Year 8)",    values = vect,
+      group     = "Deep water CV (Year 8)",    layerId = "Deep water CV (Year 8)") %>%
     # addImageQuery(fetch_cv$fetch_shallow_mask, digits = 2, layerId = "Fetch SI (Shallow)") %>%
     # addImageQuery(fetch_cv$fetch_deep_mask,    digits = 2, layerId = "Fetch SI (Deep)") %>%
     # addImageQuery(road_cv$road_buffer_cv,      digits = 2, layerId = "Distance to Roads SI") %>%
-    # addImageQuery(sed_dep_cv$sed_dep_si_03_03, digits = 2, layerId = "Sediment deposition SI (Year 1)") %>%
-    # addImageQuery(sed_dep_cv$sed_dep_si_10_10, digits = 2, layerId = "Sediment deposition SI (Year 8)") %>%
-    # addImageQuery(shallow_cv$shallow_cv_03_03, digits = 2, layerId = "Shallow water CV (Year 1)") %>%
+    # addImageQuery(sed_dep_cv$sed_dep_si_03_03, digits = 2, layerId = "Sediment deposition SI") %>%
+    # addImageQuery(sed_dep_cv$sed_dep_si_10_10, digits = 2, layerId = "Sediment deposition SI") %>%
+    # addImageQuery(shallow_cv$shallow_cv_03_03, digits = 2, layerId = "Shallow water CV (Year 8)") %>%
     # addImageQuery(shallow_cv$shallow_cv_10_10, digits = 2, layerId = "Shallow water CV (Year 8)") %>%
-    # addImageQuery(deep_cv$deep_cv_03_03,       digits = 2, layerId = "Deep water CV (Year 1)") %>%
+    # addImageQuery(deep_cv$deep_cv_03_03,       digits = 2, layerId = "Deep water CV (Year 8)") %>%
     # addImageQuery(deep_cv$deep_cv_10_10,       digits = 2, layerId = "Deep water CV (Year 8)") %>%
     addLayersControl(
       options = layersControlOptions(collapsed = T),
@@ -549,9 +546,9 @@ cv_basemap <- function(
         "Fetch SI (Shallow)",
         "Fetch SI (Deep)",
         "Distance to Roads SI",
-        "Sediment deposition SI (Year 1)",
-        "Shallow water CV (Year 1)",
-        "Deep water CV (Year 1)"
+        "Sediment deposition SI",
+        "Shallow water CV (Year 8)",
+        "Deep water CV (Year 8)"
       )
     ) %>%
     hideGroup(
@@ -559,9 +556,9 @@ cv_basemap <- function(
         "Fetch SI (Shallow)",
         "Fetch SI (Deep)",
         "Distance to Roads SI",
-        "Sediment deposition SI (Year 1)",
-        "Shallow water CV (Year 1)",
-        "Deep water CV (Year 1)")
+        "Sediment deposition SI",
+        "Shallow water CV (Year 8)",
+        "Deep water CV (Year 8)")
     ) %>%
     addBootstrapDependency() %>% # Add Bootstrap to be able to use a modal
     addEasyButton(
@@ -579,60 +576,11 @@ cv_basemap <- function(
 
 # ---- Shiny utils ---
 ov_basemap <- function(
-      si_sal,
-      si_ms,
-      si_ov,
+      ov,
       pts = NULL
       )
 
   {
-
-  # ---- OV INFO BUTTON ----
-#   ov_info_box <- HTML(paste0(
-#     HTML(
-#       '<div class="modal fade" id="infobox" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
-#     ),
-#
-#     # Header / Title
-#     HTML("<strong>Meta data</strong>"),
-#     HTML(
-#       '</div><div class="modal-body">'
-#     ),
-#     HTML('
-# <table class="table">
-#       <thead>
-#         <tr>
-#           <th scope="col">Layer</th>
-#           <th scope="col">Description</th>
-#           </tr>
-#         </thead>
-#         <tbody>
-#          <tr>
-#             <td><strong>Cool month min salinity</strong></td>
-#             <td>Suitability index based on cool month minimum salinity </td>
-#             </tr>
-#          <tr>
-#             <td><strong>Warm month min salinity</strong></td>
-#             <td> Suitability index based on warm month minimum salinity</td>
-#          </tr>
-#          <tr>
-#             <td><strong>Annual mean salinity</strong></td>
-#             <td> Suitability index based on annual average salinity </td>
-#          </tr>
-#          <tr>
-#             <td><strong>SI MS</strong></td>
-#             <td>Suitability index based on combination of cool and warm month minimum salinity</td>
-#          </tr>
-#          <tr>
-#             <td><strong>SI OV</td>
-#             <td>Oyster viability index based on cool and warm month minimum salinity and annual average salinity</td>
-#          </tr>
-#     </tbody>
-# </table>'
-#     ),
-#     # Closing divs
-#     HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
-#   ))
 
   # ---- COLOR PALETTES & LABELS -----
 
@@ -656,108 +604,108 @@ ov_basemap <- function(
     setView(lng = -91.47, lat = 30.295, zoom = 8) %>%
     # setMaxBounds(lng1 = -95, lat1 = 31, lng2=-87, lat2=28) %>%
     addRasterImage(
-      si_sal$si_sal_cool,
+      ov$si_sal_cool,
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "Cool month min salinity (Year 1)",
-      layerId     = "Cool month min salinity (Year 1)") %>%
+      group     = "Cool month min salinity (Year 8)",
+      layerId   = "Cool month min salinity (Year 8)") %>%
     addRasterImage(
-      si_sal$si_sal_warm,
+      ov$si_sal_warm,
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "Warm month min salinity (Year 1)",
-      layerId     = "Warm month min salinity (Year 1)") %>%
+      group     = "Warm month min salinity (Year 8)",
+      layerId   = "Warm month min salinity (Year 8)") %>%
     addRasterImage(
-     si_sal$si_sal_avg,
+     ov$si_sal_avg,
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "Annual mean salinity (Year 1)",
-      layerId     = "Annual mean salinity (Year 1)") %>%
+      group     = "Annual mean salinity (Year 8)",
+      layerId   = "Annual mean salinity (Year 8)") %>%
     addRasterImage(
-      si_ms,
+      ov$si_ms,
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "SI MS (Year 1)",
-      layerId     = "SI MS (Year 1)") %>%
+      group     = "SI MS (Year 8)",
+      layerId   = "SI MS (Year 8)") %>%
     addRasterImage(
-      si_ov,
+      ov$si_ov,
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "SI OV (Year 1)",
-      layerId     = "SI OV (Year 1)") %>%
+      group     = "SI OV (Year 8)",
+      layerId   = "SI OV (Year 8)") %>%
     addLegend(
       pal       = si_pal,
       position  = "bottomleft",
       values    = vect,
-      title     = "Cool month min salinity (Year 1)",
-      group     = "Cool month min salinity (Year 1)",  layerId   = "Cool month min salinity (Year 1)") %>%
+      title     = "Cool month min salinity (Year 8)",
+      group     = "Cool month min salinity (Year 8)",  layerId   = "Cool month min salinity (Year 8)") %>%
     addLegend(
       pal       = si_pal,
       position  = "bottomleft",
       values    = vect,
-      title     = "Warm month min salinity (Year 1)",
-      group     = "Warm month min salinity (Year 1)",  layerId   = "Warm month min salinity (Year 1)") %>%
+      title     = "Warm month min salinity (Year 8)",
+      group     = "Warm month min salinity (Year 8)",  layerId   = "Warm month min salinity (Year 8)") %>%
     addLegend(
       pal       = si_pal,
       position  = "bottomleft",
       values    = vect,
-      title     = "Annual mean salinity (Year 1)",
-      group     = "Annual mean salinity (Year 1)",  layerId   = "Annual mean salinity (Year 1)") %>%
+      title     = "Annual mean salinity (Year 8)",
+      group     = "Annual mean salinity (Year 8)",  layerId   = "Annual mean salinity (Year 8)") %>%
     addLegend(
       pal       = si_pal,
       position  = "bottomleft",
       values    = vect,
-      title     = "SI MS (Year 1)",
-      group     = "SI MS (Year 1)",  layerId   = "SI MS (Year 1)") %>%
+      title     = "SI MS (Year 8)",
+      group     = "SI MS (Year 8)",  layerId   = "SI MS (Year 8)") %>%
     addLegend(
       pal       = si_pal,
       position  = "bottomleft",
       values    = vect,
-      title     = "SI OV (Year 1)",
-      group     = "SI OV (Year 1)",  layerId   = "SI OV (Year 1)") %>%
+      title     = "SI OV (Year 8)",
+      group     = "SI OV (Year 8)",  layerId   = "SI OV (Year 8)") %>%
     # addImageQuery(sal_cool$salinity_min_cool_03_03, digits    = 2, position  = "bottomright",
-    #               layerId   = "Cool month min salinity (Year 1)") %>%
+    #               layerId   = "Cool month min salinity (Year 8)") %>%
     # addImageQuery(sal_cool$salinity_min_cool_10_10, digits    = 2, position  = "bottomright",
     #               layerId   = "Sal SI cool (Year 8)") %>%
     # addImageQuery(sal_warm$salinity_min_warm_03_03, digits    = 2, position  = "bottomright",
-    #               layerId   = "Warm month min salinity (Year 1)") %>%
+    #               layerId   = "Warm month min salinity (Year 8)") %>%
     # addImageQuery(sal_warm$salinity_min_warm_10_10,  digits    = 2, position  = "bottomright",
     #               layerId   = "Sal SI warm (Year 8)") %>%
     # addImageQuery(sal_avg$salinity_avg_03_03, digits    = 2, position  = "bottomright",
-    #               layerId   = "Annual mean salinity (Year 1)") %>%
+    #               layerId   = "Annual mean salinity (Year 8)") %>%
     # addImageQuery(sal_avg$salinity_avg_10_10, digits    = 2, position  = "bottomright",
     #               layerId   = "Sal SI avg (Year 8)") %>%
     # addImageQuery(si_ms$si_ms_mask_03_03, digits    = 2, position  = "bottomright",
-    #               layerId   = "SI MS (Year 1)") %>%
+    #               layerId   = "SI MS (Year 8)") %>%
     # addImageQuery(si_ms$si_ms_mask_10_10, digits    = 2, position  = "bottomright",
     #               layerId   = "SI MS (Year 8)") %>%
     # addImageQuery(si_ov$si_ov_mask_03_03, digits    = 2,  position  = "bottomright",
-    #               layerId   = "SI OV (Year 1)") %>%
+    #               layerId   = "SI OV (Year 8)") %>%
     # addImageQuery(si_ov$si_ov_mask_10_10, digits    = 2,  position  = "bottomright",
     #               layerId   = "SI OV (Year 8)") %>%
     addLayersControl(
       options = layersControlOptions(collapsed = TRUE),
       baseGroups = c( "Topographic", "Imagery"),  # "Topographic w/ roads"
       overlayGroups = c(
-        "Cool month min salinity (Year 1)",
-        "Warm month min salinity (Year 1)",
-        "Annual mean salinity (Year 1)",
-        "SI MS (Year 1)",
-        "SI OV (Year 1)"
+        "Cool month min salinity (Year 8)",
+        "Warm month min salinity (Year 8)",
+        "Annual mean salinity (Year 8)",
+        "SI MS (Year 8)",
+        "SI OV (Year 8)"
       )
     ) %>%
     hideGroup(
       c(
-        "Cool month min salinity (Year 1)",
-        "Warm month min salinity (Year 1)",
-        "Annual mean salinity (Year 1)",
-        "SI MS (Year 1)",
-        "SI OV (Year 1)"
+        "Cool month min salinity (Year 8)",
+        "Warm month min salinity (Year 8)",
+        "Annual mean salinity (Year 8)",
+        "SI MS (Year 8)",
+        "SI OV (Year 8)"
       )
     ) %>%
     addBootstrapDependency() %>%
@@ -922,58 +870,10 @@ aoc_basemap <- function(
   sowb,
   cup,
   cpra_projects,
+  ldh,
   pts = NULL
 ) {
-  # ---- AOC Info button ----
-  # aoc_info_box <- HTML(paste0(
-  #   HTML(
-  #     '<div class="modal fade" id="infobox2" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
-  #   ),
-  #
-  #   # Header / Title
-  #   HTML("<strong>Meta data</strong>"),
-  #   HTML(
-  #     '</div><div class="modal-body">'
-  #   ),
-  #   HTML('
-  #     <table class="table">
-  #           <thead>
-  #             <tr>
-  #               <th scope="col">Layer</th>
-  #               <th scope="col">Description</th>
-  #               </tr>
-  #             </thead>
-  #             <tbody>
-  #              <tr>
-  #                 <td><strong>AOC Shallow</strong></td>
-  #                 <td>AOC suitability index for shallow water operations based on oyster viability and commercial viability</td>
-  #                 </tr>
-  #              <tr>
-  #                 <td><strong>AOC Deep</strong></td>
-  #                 <td>AOC suitability index for deep water operations based on oyster viability and commercial viability </td>
-  #              </tr>
-  #              <tr>
-  #                 <td><strong>USACE Navigation Channels</strong></td>
-  #                 <td>Reference layer showing navigation channels, which may create regulatory limitations on AOC operations</td>
-  #              </tr>
-  #              <tr>
-  #                 <td><strong>State owned water bottoms</strong></td>
-  #                 <td>Reference layer showing state owned water bottoms, where AOC operations would be allowed</td>
-  #              </tr>
-  #              <tr>
-  #                 <td><strong>Coastal Use Permits</strong></td>
-  #                 <td>Reference layer showing coastal use permits, which may create regulatory limits on AOC operations </td>
-  #              </tr>
-  #              <tr>
-  #                 <td><strong>CPRA Projects</strong></td>
-  #                 <td>Reference layer showing integrated protection projects, which may create regulatory limitations on AOC operations</td>
-  #              </tr>
-  #         </tbody>
-  #     </table>'
-  #   ),
-  #   # Closing divs
-  #   HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
-  # ))
+
   # ---- COLOR PALETTES & LABELS -----
 
   # AOC permitted areas polygon
@@ -985,16 +885,18 @@ aoc_basemap <- function(
 
   # sowb legend color palette + label
   sowb_label       <- "State owned water bottoms"
-  sowb_pal         <- colorFactor(c("green"),   domain = sowb_label)
+  sowb_pal         <- colorFactor(c("black"),   domain = sowb_label)
 
   # Coastal use permits legend color palette + label
   cup_label        <- "Coastal use permits"
-  cup_pal          <- colorFactor(c("red"),   domain = cup_label)
+  cup_pal          <- colorFactor(c("black"),   domain = cup_label)
 
   # Coastal use permits legend color palette + label
   cpra_label       <- "CPRA Projects"
-  cpra_pal         <- colorFactor(c("red"),   domain = cpra_label)
+  cpra_pal         <- colorFactor(c("black"),   domain = cpra_label)
 
+  # LDH factor color palette
+  ldh_pal          <- colorFactor(c("red", "yellow", "green"),   domain = ldh$Status)
   # SI value domain
   vect <- seq(0, 1, by = .1)
 
@@ -1015,14 +917,14 @@ aoc_basemap <- function(
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "AOC shallow (Year 1)",
-      layerId   = "AOC shallow (Year 1)") %>%
+      group     = "AOC shallow (Year 8)",
+      layerId   = "AOC shallow (Year 8)") %>%
     addRasterImage(
       aoc$aoc_deep,
       project   = T,
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
-      group     = "AOC deep (Year 1)") %>%
+      group     = "AOC deep (Year 8)") %>%
     addPolygons(
       data      = aoc_areas,
       fillColor = ~aoc_poly_pal(label),
@@ -1046,84 +948,92 @@ aoc_basemap <- function(
       group     = "USACE navigation channels") %>%
     addRasterImage(
       sowb,
-      colors    = "green",
+      colors    = "black",
       opacity   = 0.2,
       group     = "State owned water bottoms") %>%
     addRasterImage(
       cup,
-      colors    = "red",
+      colors    = "black",
       opacity   = 0.2,
       group     = "Coastal Use Permits") %>%
     addRasterImage(
       cpra_projects,
-      colors    = "red",
+      colors    = "black",
       opacity   = 0.2,
       group     = "CPRA Projects") %>%
+    addPolygons(
+      data        = ldh,
+      fillColor   = ~ldh_pal(Status), fillOpacity = 0.2, color       = ~ldh_pal(Status),
+      weight      = 3,                opacity     = 1,   label       = ~Status,
+      group       = "Oyster harvest areas",
+      highlightOptions = highlightOptions(
+        opacity = 1,
+        weight = 6,
+        bringToFront = TRUE)) %>%
     addLegend(
       pal       = aoc_pal,
       position  = "bottomleft",
-      values    = vect,
-      title     = "AOC shallow (Year 1)",
-      group     = "AOC shallow (Year 1)",  layerId   = "AOC shallow (Year 1)") %>%
+      title     = "AOC shallow (Year 8)",      values    = vect,
+      group     = "AOC shallow (Year 8)",      layerId   = "AOC shallow (Year 8)") %>%
     addLegend(
       pal       = aoc_pal,
       position  = "bottomleft",
-      values    = vect,
-      title     = "AOC deep (Year 1)",
-      group     = "AOC deep (Year 1)",  layerId   = "AOC deep (Year 1)") %>%
+      title     = "AOC deep (Year 8)",         values    = vect,
+      group     = "AOC deep (Year 8)",         layerId   = "AOC deep (Year 8)") %>%
     addLegend(
       pal       = aoc_poly_pal,
       position  = "topleft",
-      title     = "AOC permitted areas",
-      values    = aoc_areas$label,
-      group     = "AOC permitted areas",
-      layerId   = "AOC permitted areas") %>%
+      title     = "AOC permitted areas",       values    = aoc_areas$label,
+      group     = "AOC permitted areas",       layerId   = "AOC permitted areas") %>%
     addLegend(
       pal       = waterways_pal,
-      position  = "topleft", values = waterways_label,
-      group     = "USACE navigation channels", layerId  = "USACE navigation channels") %>%
+      position  = "topleft",                   values    = waterways_label,
+      group     = "USACE navigation channels", layerId   = "USACE navigation channels") %>%
     addLegend(
       pal       = sowb_pal,
-      position  = "topleft", values    = sowb_label,
-      group     = "State owned water bottoms", layerId = "State owned water bottoms") %>%
+      position  = "topleft",                   values    = sowb_label,
+      group     = "State owned water bottoms", layerId   = "State owned water bottoms") %>%
     addLegend(
       pal       = cup_pal,
-      position  = "topleft",
-      values    = cup_label,
-      group     = "Coastal Use Permits",
-      layerId   = "Coastal Use Permits") %>%
+      position  = "topleft",                   values    = cup_label,
+      group     = "Coastal Use Permits",       layerId   = "Coastal Use Permits") %>%
     addLegend(
       pal       = cpra_pal,
+      position  = "topleft",                   values    = cpra_label,
+      group     = "CPRA Projects",             layerId   = "CPRA Projects") %>%
+    addLegend(
+      pal       = ldh_pal,
       position  = "topleft",
-      values    = cpra_label,
-      group     = "CPRA Projects",
-      layerId   = "CPRA Projects") %>%
+      title     ='Oyster harvest areas status',values    = ldh$Status,
+      group     = "Oyster harvest areas",      layerId   = "Oyster harvest areas") %>%
     # addImageQuery(aoc_shallow$aoc_shallow_03_03,
     #               digits    = 2,
     #               position  = "bottomright",
-    #               layerId   = "AOC shallow (Year 1)") %>%
+    #               layerId   = "AOC shallow (Year 8)") %>%
     addLayersControl(
       options = layersControlOptions(collapsed = T),
       baseGroups = c("Topographic", "Imagery"), #"Topographic w/ roads"),
       overlayGroups = c(
-        "AOC shallow (Year 1)",
-        "AOC deep (Year 1)",
+        "AOC shallow (Year 8)",
+        "AOC deep (Year 8)",
         "USACE navigation channels",
         "State owned water bottoms",
         "Coastal Use Permits",
         "CPRA Projects",
-        "AOC permitted areas"
+        "AOC permitted areas",
+        "Oyster harvest areas"
       )
     ) %>%
     hideGroup(
       c(
-        "AOC shallow (Year 1)",
-        "AOC deep (Year 1)",
+        "AOC shallow (Year 8)",
+        "AOC deep (Year 8)",
         "USACE navigation channels",
         "State owned water bottoms",
         "Coastal Use Permits",
         "CPRA Projects",
-        "AOC permitted areas"
+        "AOC permitted areas",
+        "Oyster harvest areas"
       )) %>%
     addEasyButton(
       easyButton(

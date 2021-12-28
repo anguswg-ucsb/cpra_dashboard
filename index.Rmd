@@ -58,61 +58,37 @@ crs            <- CRS('+init=EPSG:26915')
 # # extent for all rasters
 ext            <- extent(c(405220, 909700, 3199570, 3416530))
 
-# =====================================
-# ---- Commercial Viability layers ----
-# =====================================
+# ============================
+# ---- CV + OV + AOC data ----
+# ============================
 
-# Distance to Roads CV
-si_road      <- raster::raster("mp2023_si_roads.tif")
+# Commericial viability
+cv           <- readRDS("mp2023_commercial_viability.rds")
 
-# Fetch shallow/deep
-si_fetch     <- raster::stack("mp2023_si_fetch.tif")
+# Oyster Viability
+ov           <- readRDS("mp2023_salinity_si_yr_08.rds")
 
-# Sediment Deposition CV
-si_sed_dep   <- raster::raster("mp2023_si_sed_dep.tif")
-
-cv           <- raster::stack("mp2023_commercial_viability.tif")
-# 
-# # Shallow water CV
-# # shallow_cv <- raster::stack("shallow_cv_mask.tif") %>%
-# #   setNames(c("shallow_cv_03_03", "shallow_cv_10_10"))
-# #
-# # # Deep water CV
-# # deep_cv <- raster::stack("deep_cv_mask.tif") %>%
-# #   setNames(c("deep_cv_03_03", "deep_cv_10_10"))
-# 
-# 
-# # =================================
-# # ---- Oyster Viability layers ----
-# # =================================
-# 
-si_sal <- raster::stack("mp2023_si_sal.tif")
-si_ms  <- raster::raster("mp2023_si_ms.tif")
-si_ov  <- raster::raster("mp2023_si_ov.tif")
-# 
-# # =======================
-# # ---- AOC (CV x OV) ----
-# # =======================
-
-aoc <- raster::stack("mp2023_aoc.tif")
+# AOC
+aoc          <-  readRDS("mp2023_aoc_yr_08.rds")
+# ov <- raster::stack("mp2023_salinity_si_yr_08.tif")
 
 # ==================
 # ---- Polygons ----
 # ==================
 
 # AOC
-aoc_areas            <- readRDS("aoc_area_polygon.rds") %>%
-      st_transform(4326) %>%
-      st_union() %>%
-      st_as_sf() %>%
-      mutate(
-        label   = "AOC permitted areas"
-        )
+aoc_areas     <- readRDS("aoc_area_polygon.rds") %>%
+                          st_transform(4326) %>%
+                          st_union() %>%
+                          st_as_sf() %>%
+                          mutate(
+                            label   = "AOC permitted areas"
+                            )
 
 # Navigable waterways
 waterways      <- readRDS("navig_waterways_buffer_simple.rds") %>%
-      st_transform(4326) %>%
-      mutate(label = "Navigatable waterways")
+                          st_transform(4326) %>%
+                          mutate(label = "Navigatable waterways")
 
 # Coastal use permits
 cup            <- raster::raster("coastal_use_permits_480m.tif")
@@ -121,51 +97,34 @@ cup            <- raster::raster("coastal_use_permits_480m.tif")
 sowb           <- raster::raster("state_owned_water_bottoms_480m.tif")
 
 # CPRA & FWOA Projects
-# cpra_projects  <-  readRDS("cpra_fwoa_projects_buffer3.rds")
 cpra_projects  <-  raster::raster("cpra_restoration_proj_480m_v2.tif")
-# ========================================
+# cpra_projects  <-  readRDS("cpra_fwoa_projects_buffer3.rds")
 
-# ==================
-# ---- Polygons ----
-# ==================
+# Oyster leases 
+oyster_leases  <- readRDS("oyster_leases_simple.rds") 
 
+# # LDH polygon
+ldh            <- readRDS("ldh_classifications_simple.rds") %>%
+                            st_transform(26915) %>%
+                            st_transform(4326)
 # depth raster
 # depth <- raster::raster(paste0(path, "depth_inundation/depth_inundation_01_01_480m_resample.tif"))
 
 # landwater
-# land_sf        <- readRDS("land_polygon_simple_v4.rds") %>%
-#         st_transform(26915) %>%
-#         st_transform(4326) %>%
-#         mutate(label = "2023 MP Land (Year 1)") 
-        # dplyr::select(land = landwater_binary_mp2023, label, geometry)
+# land_sf     <- readRDS("land_polygon_simple_v4.rds") %>%   st_transform(26915) %>% st_transform(4326) %>%  mutate(label = "2023 MP Land (Year 1)")  dplyr::select(land = landwater_binary_mp2023, label, geometry)
+# ========================================
 
-# LDH polygon
-# ldh <- readRDS("ldh_classifications.rds") %>%
-#           st_transform(26915) %>%
-#           st_transform(4326) %>%
-#           mutate(
-#               Status = case_when(
-#                 Status == "open" ~ "Open",
-#                 Status == "Closed" ~ "Closed",
-#                 Status == "intermed" ~ "Intermediate"
-#                 )
-#               )
 
 # # Initialize Maps
 output$cvMap        <- renderLeaflet({
     cv_basemap(
-      si_road      = si_road,
-      si_fetch     = si_fetch,
-      si_sed_dep   = si_sed_dep,
-      cv           = cv
+      cv = cv
     )
   })
 
 output$ovMap        <- renderLeaflet({
     ov_basemap(
-      si_sal      = si_sal,
-      si_ms       = si_ms,
-      si_ov       = si_ov
+      ov = ov
       )
   })
 
@@ -176,6 +135,7 @@ output$aocMap        <- renderLeaflet({
       waterways     = waterways,
       sowb          = sowb,
       cup           = cup,
+      ldh           = ldh,
       cpra_projects = cpra_projects
     )
   })
@@ -194,138 +154,6 @@ output$aocMap        <- renderLeaflet({
 
 AOC model
 =====================================
-<!-- Inputs {.sidebar} -->
-<!-- ---------------------------------------------------- -->
-
-<!-- *** -->
-
-<!-- ### -->
-```{r}
-# useShinyalert(rmd = TRUE)
-# actionButton(
-#   "modelRunHelpButton",
-#   label = "Meta data"
-#   # class = "btn-primary btn-lg",
-#   # icon("question")
-#   )
-# 
-# observeEvent(input$modelRunHelpButton, {
-#   shinyalert(title               = " ",
-#              closeOnClickOutside = TRUE,
-#              showCancelButton    = TRUE,
-#              html                = TRUE,
-#              text                =
-#               HTML('
-#                 <table class="table">
-#                   <h6><strong>Commercial Viability</strong></h6>
-#                       <thead>
-#                         <tr>
-#                           <th scope="col">Layer</th>
-#                           <th scope="col">Description</th>
-#                           </tr>
-#                         </thead>
-#                         <tbody>
-#                          <tr>
-#                             <td><strong>Fetch</strong></td>
-#                             <td>Average exposure to open water. Provides a proxy for wave energy that could affect AOC operations </td>
-#                             </tr>
-#                          <tr>
-#                             <td><strong>Roads</strong></td>
-#                             <td>Straight line distance to nearest road. Provides a metric for ease of access.</td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>Sediment Deposition</strong></td>
-#                             <td> Sediment deposition rate. Provides a measure of AOC level of effort to reduce effects of sedimentation.</td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>Shallow water CV</strong></td>
-#                             <td>Index of commercial viability for AOC operations in shallow water based on fetch, road distance, and sediment deposition </td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>Deep water CV</strong></td>
-#                             <td>Index of commercial viability for AOC operations in deep water based on fetch and sediment deposition </td>
-#                          </tr>
-#                     </tbody>
-#                 </table>
-#                          <table class="table">
-#                           <h6><strong>Oyster Viability</strong></h6>
-#                       <thead>
-#                         <tr>
-#                           <th scope="col">Layer</th>
-#                           <th scope="col">Description</th>
-#                           </tr>
-#                         </thead>
-#                         <tbody>
-#                           <tr>
-#                             <td><strong>Cool month min salinity</strong></td>
-#                             <td>Suitability index based on cool month minimum salinity </td>
-#                             </tr>
-#                          <tr>
-#                             <td><strong>Warm month min salinity</strong></td>
-#                             <td> Suitability index based on warm month minimum salinity</td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>Annual mean salinity</strong></td>
-#                             <td> Suitability index based on annual average salinity </td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>SI MS</strong></td>
-#                             <td>Suitability index based on combination of cool and warm month minimum salinity</td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>SI OV</td>
-#                             <td>Oyster viability index based on cool and warm month minimum salinity and annual average salinity</td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>AOC Shallow</strong></td>
-#                             <td>AOC suitability index for shallow water operations based on oyster viability and commercial viability</td>
-#                             </tr>
-#                          <tr>
-#                             <td><strong>AOC Deep</strong></td>
-#                             <td>AOC suitability index for deep water operations based on oyster viability and commercial viability </td>
-#                          </tr>
-#                     </tbody>
-#                 </table>
-#                 <table class="table">
-#                  <h6><strong>AOC</strong></h6>
-#                       <thead>
-#                         <tr>
-#                           <th scope="col">Layer</th>
-#                           <th scope="col">Description</th>
-#                           </tr>
-#                         </thead>
-#                         <tbody>
-#                          <tr>
-#                             <td><strong>AOC Shallow</strong></td>
-#                             <td>AOC suitability index for shallow water operations based on oyster viability and commercial viability</td>
-#                             </tr>
-#                          <tr>
-#                             <td><strong>AOC Deep</strong></td>
-#                             <td>AOC suitability index for deep water operations based on oyster viability and commercial viability </td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>USACE Navigation Channels</strong></td>
-#                             <td>Reference layer showing navigation channels, which may create regulatory limitations on AOC operations</td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>State owned water bottoms</strong></td>
-#                             <td>Reference layer showing state owned water bottoms, where AOC operations would be allowed</td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>Coastal Use Permits</strong></td>
-#                             <td>Reference layer showing coastal use permits, which may create regulatory limits on AOC operations </td>
-#                          </tr>
-#                          <tr>
-#                             <td><strong>CPRA Projects</strong></td>
-#                             <td>Reference layer showing integrated protection projects, which may create regulatory limitations on AOC operations</td>
-#                          </tr>
-#                     </tbody>
-#                 </table>'
-#                 )
-#              )
-# })
-```
-
 Column
 -----------------------------------------------------------------------
 ### Commercial viability
@@ -562,115 +390,131 @@ observeEvent(input$aoc_info_button, {
   })
 ```
 
-```{r context = "server"}
-# click on refresh button
-# observeEvent(input$my_easy_button, { output$testMap = renderMap() })
-# tags$html(HTML(paste0(
-#     HTML(
-#       '<div class="modal fade" id="infobox2" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
-#     ),
+<!-- ### -->
+```{r}
+# useShinyalert(rmd = TRUE)
+# actionButton(
+#   "modelRunHelpButton",
+#   label = "Meta data"
+#   # class = "btn-primary btn-lg",
+#   # icon("question")
+#   )
 # 
-#     # Header / Title
-#     HTML("<strong>Meta data</strong>"),
-#     HTML(
-#       '</div><div class="modal-body">'
-#     ),
-#     HTML('
-#       <table class="table">
-#             <thead>
-#               <tr>
-#                 <th scope="col">Layer</th>
-#                 <th scope="col">Description</th>
-#                 </tr>
-#               </thead>
-#               <tbody>
-#                <tr>
-#                   <td><strong>AOC Shallow</strong></td>
-#                   <td>AOC suitability index for shallow water operations based on oyster viability and commercial viability</td>
-#                   </tr>
-#                <tr>
-#                   <td><strong>AOC Deep</strong></td>
-#                   <td>AOC suitability index for deep water operations based on oyster viability and commercial viability </td>
-#                </tr>
-#                <tr>
-#                   <td><strong>USACE Navigation Channels</strong></td>
-#                   <td>Reference layer showing navigation channels, which may create regulatory limitations on AOC operations</td>
-#                </tr>
-#                <tr>
-#                   <td><strong>State owned water bottoms</strong></td>
-#                   <td>Reference layer showing state owned water bottoms, where AOC operations would be allowed</td>
-#                </tr>
-#                <tr>
-#                   <td><strong>Coastal Use Permits</strong></td>
-#                   <td>Reference layer showing coastal use permits, which may create regulatory limits on AOC operations </td>
-#                </tr>
-#                <tr>
-#                   <td><strong>CPRA Projects</strong></td>
-#                   <td>Reference layer showing integrated protection projects, which may create regulatory limitations on AOC operations</td>
-#                </tr>
-#           </tbody>
-#       </table>'
-#     ),
-#     # Closing divs
-#     HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
-#   )))
-#   observeEvent(input$my_easy_button, {
-#     str(input$my_easy_button)
-#   })
-# 
-#   observeEvent(input$my_easy_button, {
-#     # ---- info box ----
-#           info_box <- HTML(paste0(
-#     HTML(
-#       '<div class="modal fade" id="infobox" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
-#     ),
-# 
-#     # Header / Title
-#     HTML("<strong>Meta data</strong>"),
-#     HTML(
-#       '</div><div class="modal-body">'
-#     ),
-#     HTML('
-# <table class="table">
-#       <thead>
-#         <tr>
-#           <th scope="col">Layer</th>
-#           <th scope="col">Description</th>
-#           </tr>
-#         </thead>
-#         <tbody>
-#          <tr>
-#             <td><strong>Cool month min salinity</strong></td>
-#             <td>Suitability index based on cool month minimum salinity </td>
-#             </tr>
-#          <tr>
-#             <td><strong>Warm month min salinity</strong></td>
-#             <td> Suitability index based on warm month minimum salinity</td>
-#          </tr>
-#          <tr>
-#             <td><strong>Annual mean salinity</strong></td>
-#             <td> Suitability index based on annual average salinity </td>
-#          </tr>
-#          <tr>
-#             <td><strong>SI MS</strong></td>
-#             <td>Suitability index based on combination of cool and warm month minimum salinity</td>
-#          </tr>
-#          <tr>
-#             <td><strong>SI OV</td>
-#             <td>Oyster viability index based on cool and warm month minimum salinity and annual average salinity</td>
-#          </tr>
-#     </tbody>
-# </table>'
-#     ),
-#     # Closing divs
-#     HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
-#   ))
-#           
-#           
-#     # ---- append info box to leaflet ----
-#     leafletProxy("testMap") %>% 
-#       htmlwidgets::appendContent(info_box)
-#   })
+# observeEvent(input$modelRunHelpButton, {
+#   shinyalert(title               = " ",
+#              closeOnClickOutside = TRUE,
+#              showCancelButton    = TRUE,
+#              html                = TRUE,
+#              text                =
+#               HTML('
+#                 <table class="table">
+#                   <h6><strong>Commercial Viability</strong></h6>
+#                       <thead>
+#                         <tr>
+#                           <th scope="col">Layer</th>
+#                           <th scope="col">Description</th>
+#                           </tr>
+#                         </thead>
+#                         <tbody>
+#                          <tr>
+#                             <td><strong>Fetch</strong></td>
+#                             <td>Average exposure to open water. Provides a proxy for wave energy that could affect AOC operations </td>
+#                             </tr>
+#                          <tr>
+#                             <td><strong>Roads</strong></td>
+#                             <td>Straight line distance to nearest road. Provides a metric for ease of access.</td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>Sediment Deposition</strong></td>
+#                             <td> Sediment deposition rate. Provides a measure of AOC level of effort to reduce effects of sedimentation.</td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>Shallow water CV</strong></td>
+#                             <td>Index of commercial viability for AOC operations in shallow water based on fetch, road distance, and sediment deposition </td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>Deep water CV</strong></td>
+#                             <td>Index of commercial viability for AOC operations in deep water based on fetch and sediment deposition </td>
+#                          </tr>
+#                     </tbody>
+#                 </table>
+#                          <table class="table">
+#                           <h6><strong>Oyster Viability</strong></h6>
+#                       <thead>
+#                         <tr>
+#                           <th scope="col">Layer</th>
+#                           <th scope="col">Description</th>
+#                           </tr>
+#                         </thead>
+#                         <tbody>
+#                           <tr>
+#                             <td><strong>Cool month min salinity</strong></td>
+#                             <td>Suitability index based on cool month minimum salinity </td>
+#                             </tr>
+#                          <tr>
+#                             <td><strong>Warm month min salinity</strong></td>
+#                             <td> Suitability index based on warm month minimum salinity</td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>Annual mean salinity</strong></td>
+#                             <td> Suitability index based on annual average salinity </td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>SI MS</strong></td>
+#                             <td>Suitability index based on combination of cool and warm month minimum salinity</td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>SI OV</td>
+#                             <td>Oyster viability index based on cool and warm month minimum salinity and annual average salinity</td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>AOC Shallow</strong></td>
+#                             <td>AOC suitability index for shallow water operations based on oyster viability and commercial viability</td>
+#                             </tr>
+#                          <tr>
+#                             <td><strong>AOC Deep</strong></td>
+#                             <td>AOC suitability index for deep water operations based on oyster viability and commercial viability </td>
+#                          </tr>
+#                     </tbody>
+#                 </table>
+#                 <table class="table">
+#                  <h6><strong>AOC</strong></h6>
+#                       <thead>
+#                         <tr>
+#                           <th scope="col">Layer</th>
+#                           <th scope="col">Description</th>
+#                           </tr>
+#                         </thead>
+#                         <tbody>
+#                          <tr>
+#                             <td><strong>AOC Shallow</strong></td>
+#                             <td>AOC suitability index for shallow water operations based on oyster viability and commercial viability</td>
+#                             </tr>
+#                          <tr>
+#                             <td><strong>AOC Deep</strong></td>
+#                             <td>AOC suitability index for deep water operations based on oyster viability and commercial viability </td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>USACE Navigation Channels</strong></td>
+#                             <td>Reference layer showing navigation channels, which may create regulatory limitations on AOC operations</td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>State owned water bottoms</strong></td>
+#                             <td>Reference layer showing state owned water bottoms, where AOC operations would be allowed</td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>Coastal Use Permits</strong></td>
+#                             <td>Reference layer showing coastal use permits, which may create regulatory limits on AOC operations </td>
+#                          </tr>
+#                          <tr>
+#                             <td><strong>CPRA Projects</strong></td>
+#                             <td>Reference layer showing integrated protection projects, which may create regulatory limitations on AOC operations</td>
+#                          </tr>
+#                     </tbody>
+#                 </table>'
+#                 )
+#              )
+# })
 ```
 
 
