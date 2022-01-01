@@ -1,4 +1,5 @@
-# # --- Shiny utils ---
+# Shiny utils
+
 # basemap <- function(
 #   land_sf,
 #   road_buffer,
@@ -18,9 +19,8 @@
 #   pts = NULL
 # ) {
 #
-#   # ==================================
-#   # ---- COLOR PALETTES & LABELS -----
-#   # ==================================
+
+#   COLOR PALETTES & LABELS
 #
 #   # Fetch color palette + labels
 #   fetch_categories <- length(unique(raster::values(fetch_cat7))) -1
@@ -96,9 +96,7 @@
 #   # hsi_pal          <- colorNumeric(viridis(n =20), domain = vect, na.color = NA, reverse = T)
 #   # hsi_pal2          <- colorNumeric(viridis(n =20), domain = values(hsi_2017), na.color = NA, reverse = T)
 #
-#   # ==================================
-#   # ----------- LEAFLET MAP ----------
-#   # ==================================
+#    LEAFLET MAP
 #   leaflet() %>%
 #     addProviderTiles(providers$Esri.WorldImagery, group = "Imagery") %>%
 #     addProviderTiles(providers$Esri.OceanBasemap, group = "Topographic") %>%
@@ -385,54 +383,9 @@ cv_basemap <- function(
   pts = NULL
 ) {
 
-  # ---- CV Info box ----
-  cv_info_box <- HTML(paste0(
-    HTML(
-      '<div class="modal fade" id="infobox1" role="dialog"><div class="modal-dialog"><!-- Modal content--><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal">&times;</button>'
-    ),
 
-    # Header / Title
-    HTML("<strong>Meta data</strong>"),
-    HTML(
-      '</div><div class="modal-body">'
-    ),
-    HTML('
-<table class="table">
-      <thead>
-        <tr>
-          <th scope="col">Layer</th>
-          <th scope="col">Description</th>
-          </tr>
-        </thead>
-        <tbody>
-         <tr>
-            <td><strong>Fetch</strong></td>
-            <td>Average exposure to open water. Provides a proxy for wave energy that could affect AOC operations </td>
-            </tr>
-         <tr>
-            <td><strong>Roads</strong></td>
-            <td>Straight line distance to nearest road. Provides a metric for ease of access.</td>
-         </tr>
-         <tr>
-            <td><strong>Sediment Deposition</strong></td>
-            <td> Sediment deposition rate. Provides a measure of AOC level of effort to reduce effects of sedimentation.</td>
-         </tr>
-         <tr>
-            <td><strong>Shallow water CV</strong></td>
-            <td>Index of commercial viability for AOC operations in shallow water based on fetch, road distance, and sediment deposition </td>
-         </tr>
-         <tr>
-            <td><strong>Deep water CV</strong></td>
-            <td>Index of commercial viability for AOC operations in deep water based on fetch and sediment deposition </td>
-         </tr>
-    </tbody>
-</table>'
-    ),
-    # Closing divs
-    HTML('</div><div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal">Close</button></div></div>')
-  ))
+  # COLOR PALETTES & LABELS
 
-  # ---- COLOR PALETTES & LABELS -----
   # 0.2 - 1 values vector
   vect <- seq(0.2, 1, by = .05)
 
@@ -445,13 +398,16 @@ cv_basemap <- function(
   # rc_wlvl_pal      <- colorNumeric(c( "red", "#FDE725FF", "#21908CFF"), # mako(n =20, direction = -1),  domain = vect, na.color = NA, reverse = F)
   # rc_wlvl_pal <- colorFactor(c("red", "green", "blue"),# cividis(n =3, direction = -1),  na.color = NA , domain = values(rc_wlvl3))
 
-  # ----------- LEAFLET MAP ----------
+  #  LEAFLET MAP
   leaflet() %>%
-    addProviderTiles(providers$Esri.OceanBasemap, group = "Topographic") %>%
-    addProviderTiles(providers$Esri.WorldImagery, group = "Imagery") %>%
+    addProviderTiles(providers$Esri.OceanBasemap,  group = "Topographic") %>%
+    addProviderTiles(providers$Esri.WorldImagery,  group = "Imagery") %>%
     # addProviderTiles(providers$Esri.DeLorme, group = "Topographic w/ roads") %>%
+    # addMapPane( "Topographic", zIndex = -50) %>%
+    # addTiles(options = tileOptions(pane = "Topographic"), group = "Topographic") %>%
+    # addProviderTiles(providers$Esri.OceanBasemap, options = providerTileOptions(pane = "Topographic"), group = "Topographic") %>%
+    # addMapPane( "Imagery", zIndex = -60) %>%
     addScaleBar("bottomleft") %>%
-    # addMeasure(position           = "bottomright", primaryLengthUnit  = "feet",   primaryAreaUnit    = "sqmiles", activeColor        = "red", completedColor     = "green") %>%
     leafem::addMouseCoordinates() %>%
     setView(lng = -91.47, lat = 30.295, zoom = 8) %>%
     # # setMaxBounds(lng1 = -95, lat1 = 31, lng2=-87, lat2=28) %>%
@@ -530,18 +486,9 @@ cv_basemap <- function(
       position  = "topleft",
       title     = "Deep water CV (Year 8)",    values = vect,
       group     = "Deep water CV (Year 8)",    layerId = "Deep water CV (Year 8)") %>%
-    # addImageQuery(fetch_cv$fetch_shallow_mask, digits = 2, layerId = "Fetch SI (Shallow)") %>%
-    # addImageQuery(fetch_cv$fetch_deep_mask,    digits = 2, layerId = "Fetch SI (Deep)") %>%
-    # addImageQuery(road_cv$road_buffer_cv,      digits = 2, layerId = "Distance to Roads SI") %>%
-    # addImageQuery(sed_dep_cv$sed_dep_si_03_03, digits = 2, layerId = "Sediment deposition SI") %>%
-    # addImageQuery(sed_dep_cv$sed_dep_si_10_10, digits = 2, layerId = "Sediment deposition SI") %>%
-    # addImageQuery(shallow_cv$shallow_cv_03_03, digits = 2, layerId = "Shallow water CV (Year 8)") %>%
-    # addImageQuery(shallow_cv$shallow_cv_10_10, digits = 2, layerId = "Shallow water CV (Year 8)") %>%
-    # addImageQuery(deep_cv$deep_cv_03_03,       digits = 2, layerId = "Deep water CV (Year 8)") %>%
-    # addImageQuery(deep_cv$deep_cv_10_10,       digits = 2, layerId = "Deep water CV (Year 8)") %>%
     addLayersControl(
-      options = layersControlOptions(collapsed = T),
-      baseGroups = c("Topographic", "Imagery"), # "Topographic w/ roads"
+      options    = layersControlOptions(collapsed = T),
+      baseGroups  = c("Topographic", "Imagery"), # "Topographic w/ roads"
       overlayGroups = c(
         "Fetch SI (Shallow)",
         "Fetch SI (Deep)",
@@ -558,7 +505,8 @@ cv_basemap <- function(
         "Distance to Roads SI",
         "Sediment deposition SI",
         "Shallow water CV (Year 8)",
-        "Deep water CV (Year 8)")
+        "Deep water CV (Year 8)"
+      )
     ) %>%
     addBootstrapDependency() %>% # Add Bootstrap to be able to use a modal
     addEasyButton(
@@ -572,6 +520,52 @@ cv_basemap <- function(
                 Shiny.onInputChange('cv_info_button', Math.random());
               }"
         )))
+    # addImageQuery(fetch_cv$fetch_shallow_mask, digits = 2, layerId = "Fetch SI (Shallow)") %>%
+    # addImageQuery(fetch_cv$fetch_deep_mask,    digits = 2, layerId = "Fetch SI (Deep)") %>%
+    # addImageQuery(road_cv$road_buffer_cv,      digits = 2, layerId = "Distance to Roads SI") %>%
+    # addImageQuery(sed_dep_cv$sed_dep_si_03_03, digits = 2, layerId = "Sediment deposition SI") %>%
+    # addImageQuery(sed_dep_cv$sed_dep_si_10_10, digits = 2, layerId = "Sediment deposition SI") %>%
+    # addImageQuery(shallow_cv$shallow_cv_03_03, digits = 2, layerId = "Shallow water CV (Year 8)") %>%
+    # addImageQuery(shallow_cv$shallow_cv_10_10, digits = 2, layerId = "Shallow water CV (Year 8)") %>%
+    # addImageQuery(deep_cv$deep_cv_03_03,       digits = 2, layerId = "Deep water CV (Year 8)") %>%
+    # addImageQuery(deep_cv$deep_cv_10_10,       digits = 2, layerId = "Deep water CV (Year 8)") %>%
+    # addLayersControl(
+    #   options    = layersControlOptions(collapsed = T),
+    #   baseGroups = c("Topographic", "Imagery"), # "Topographic w/ roads"
+    #   overlayGroups = c(
+    #     "Fetch SI (Shallow)",
+    #     "Fetch SI (Deep)",
+    #     "Distance to Roads SI",
+    #     "Sediment deposition SI",
+    #     "Shallow water CV (Year 8)",
+    #     "Deep water CV (Year 8)"
+    #   )
+    # ) %>%
+  # addLayersControl(
+  #   options    = layersControlOptions(collapsed = T),
+  #   baseGroups = c(
+  #     "Fetch SI (Shallow)",
+  #     "Fetch SI (Deep)",
+  #     "Distance to Roads SI",
+  #     "Sediment deposition SI",
+  #     "Shallow water CV (Year 8)",
+  #     "Deep water CV (Year 8)"
+  #   ),
+  #   overlayGroups  = c("Topographic")
+  #                      # "Imagery"), # "Topographic w/ roads"
+  #   ) %>%
+  #   hideGroup(
+  #     c(
+  #       # "Fetch SI (Shallow)",
+  #       "Fetch SI (Deep)",
+  #       "Distance to Roads SI",
+  #       "Sediment deposition SI",
+  #       "Shallow water CV (Year 8)",
+  #       "Deep water CV (Year 8)"
+  #       # "Imagery"
+  #     )
+  #   ) %>%
+
 }
 
 # ---- Shiny utils ---
@@ -582,7 +576,7 @@ ov_basemap <- function(
 
   {
 
-  # ---- COLOR PALETTES & LABELS -----
+  #  COLOR PALETTES & LABELS
 
   # SI value domain
   vect <- seq(0, 1, by = .1)
@@ -591,7 +585,7 @@ ov_basemap <- function(
   # SI palatte
   si_pal          <- colorNumeric(turbo(n =20, direction = -1), domain = vect, na.color = NA, reverse = F)
 
-  # ----------- LEAFLET MAP ----------
+  # LEAFLET MAP
 
   leaflet() %>%
     addProviderTiles(providers$Esri.OceanBasemap, group = "Topographic") %>%
@@ -736,7 +730,7 @@ ov_basemap <- function(
 # {
 #
 #
-#   # ----------- LEAFLET MAP ----------
+#   LEAFLET MAP
 #   # leaf <- leaflet() %>%
 #   #   addTiles() %>%
 #   #   addEasyButton(easyButton(
@@ -871,10 +865,11 @@ aoc_basemap <- function(
   cup,
   cpra_projects,
   ldh,
+  oyster_leases,
   pts = NULL
 ) {
 
-  # ---- COLOR PALETTES & LABELS -----
+  # COLOR PALETTES & LABELS
 
   # AOC permitted areas polygon
   aoc_poly_pal          <- colorFactor(c("black"),   domain = aoc_areas$label)
@@ -897,13 +892,17 @@ aoc_basemap <- function(
 
   # LDH factor color palette
   ldh_pal          <- colorFactor(c("red", "yellow", "green"),   domain = ldh$Status)
+
+  # Oyster leases palette
+  leases_pal        <- colorFactor(c("black"),   domain = oyster_leases$label)
+
   # SI value domain
   vect <- seq(0, 1, by = .1)
 
   # SI palatte
   aoc_pal          <- colorNumeric(turbo(n =20, direction = -1), domain = vect, na.color = NA, reverse = F)
 
-  # ----------- LEAFLET MAP ----------
+  # LEAFLET MAP
 
   leaflet() %>%
     addProviderTiles(providers$Esri.OceanBasemap, group = "Topographic") %>%
@@ -949,27 +948,37 @@ aoc_basemap <- function(
     addRasterImage(
       sowb,
       colors    = "black",
-      opacity   = 0.2,
+      opacity   = 0.3,
       group     = "State owned water bottoms") %>%
     addRasterImage(
       cup,
       colors    = "black",
-      opacity   = 0.2,
+      opacity   = 0.3,
       group     = "Coastal Use Permits") %>%
     addRasterImage(
       cpra_projects,
       colors    = "black",
-      opacity   = 0.2,
+      opacity   = 0.3,
       group     = "CPRA Projects") %>%
     addPolygons(
       data        = ldh,
-      fillColor   = ~ldh_pal(Status), fillOpacity = 0.2, color       = ~ldh_pal(Status),
-      weight      = 3,                opacity     = 1,   label       = ~Status,
+      fillColor   = ~ldh_pal(Status), fillOpacity  = 0.2, color       = ~ldh_pal(Status),
+      weight      = 3,                opacity      = 1,   label       = ~Status,
       group       = "Oyster harvest areas",
       highlightOptions = highlightOptions(
         opacity = 1,
         weight = 6,
         bringToFront = TRUE)) %>%
+    addPolygons(
+      data               = oyster_leases,
+      fillColor          = "black",   fillOpacity  = 0.2, color       = "black",
+      weight             = 2,         opacity      = 1,   label       = ~label,
+      group              = "Oyster leases",
+      highlightOptions   = highlightOptions(
+        opacity      = 1,
+        weight       = 4,
+        bringToFront = TRUE
+      )) %>%
     addLegend(
       pal       = aoc_pal,
       position  = "bottomleft",
@@ -1006,6 +1015,10 @@ aoc_basemap <- function(
       position  = "topleft",
       title     ='Oyster harvest areas status',values    = ldh$Status,
       group     = "Oyster harvest areas",      layerId   = "Oyster harvest areas") %>%
+    addLegend(
+      pal       = leases_pal,
+      position  = "topleft",                   values    =  oyster_leases$label,
+      group     =  "Oyster leases",            layerId   =  "Oyster leases") %>%
     # addImageQuery(aoc_shallow$aoc_shallow_03_03,
     #               digits    = 2,
     #               position  = "bottomright",
@@ -1021,7 +1034,8 @@ aoc_basemap <- function(
         "Coastal Use Permits",
         "CPRA Projects",
         "AOC permitted areas",
-        "Oyster harvest areas"
+        "Oyster harvest areas",
+        "Oyster leases"
       )
     ) %>%
     hideGroup(
@@ -1033,7 +1047,8 @@ aoc_basemap <- function(
         "Coastal Use Permits",
         "CPRA Projects",
         "AOC permitted areas",
-        "Oyster harvest areas"
+        "Oyster harvest areas",
+        "Oyster leases"
       )) %>%
     addEasyButton(
       easyButton(

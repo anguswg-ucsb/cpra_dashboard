@@ -2,13 +2,15 @@
 title: "CPRA Oyster Resource Zones"
 output:
   flexdashboard::flex_dashboard:
-    navbar:
+    navbar: null
     theme: yeti
     orientation: columns
     vertical_layout: fill
     logo: www/lynker_logo_white_transparent.png
     css: www/custom.css
 runtime: shiny
+resource_files:
+- state_owned_water_bottoms_480m.tif
 ---
 
 ```{r setup, include = FALSE}
@@ -91,19 +93,24 @@ waterways      <- readRDS("navig_waterways_buffer_simple.rds") %>%
                           mutate(label = "Navigatable waterways")
 
 # Coastal use permits
+# cup            <- readRDS("coastal_use_permits_480m.rds")
 cup            <- raster::raster("coastal_use_permits_480m.tif")
 
-# # State owned water bottoms
+# State owned water bottoms
+# sowb           <- readRDS("state_owned_water_bottoms_480m.rds")
 sowb           <- raster::raster("state_owned_water_bottoms_480m.tif")
 
 # CPRA & FWOA Projects
+# cpra_projects  <-  readRDS("cpra_restoration_proj_480m_v2.rds")
 cpra_projects  <-  raster::raster("cpra_restoration_proj_480m_v2.tif")
-# cpra_projects  <-  readRDS("cpra_fwoa_projects_buffer3.rds")
 
-# Oyster leases 
-oyster_leases  <- readRDS("oyster_leases_simple.rds") 
 
-# # LDH polygon
+# Oyster leases
+oyster_leases  <- readRDS("oyster_leases_union.rds")
+# oyster_leases  <- readRDS("oyster_leases_simple.rds")
+
+
+# LDH polygon
 ldh            <- readRDS("ldh_classifications_simple.rds") %>%
                             st_transform(26915) %>%
                             st_transform(4326)
@@ -115,7 +122,7 @@ ldh            <- readRDS("ldh_classifications_simple.rds") %>%
 # ========================================
 
 
-# # Initialize Maps
+# Initialize Maps
 output$cvMap        <- renderLeaflet({
     cv_basemap(
       cv = cv
@@ -130,13 +137,14 @@ output$ovMap        <- renderLeaflet({
 
 output$aocMap        <- renderLeaflet({
     aoc_basemap(
-      aoc           = aoc,
-      aoc_areas     = aoc_areas,
-      waterways     = waterways,
-      sowb          = sowb,
-      cup           = cup,
-      ldh           = ldh,
-      cpra_projects = cpra_projects
+      aoc            = aoc,
+      aoc_areas      = aoc_areas,
+      waterways      = waterways,
+      sowb           = sowb,
+      cup            = cup,
+      ldh            = ldh,
+      cpra_projects  = cpra_projects,
+      oyster_leases  = oyster_leases
     )
   })
 
@@ -154,13 +162,100 @@ output$aocMap        <- renderLeaflet({
 
 AOC model
 =====================================
+Inputs {.sidebar}
+-------------------------------------
+```{r}
+# Download ORZ AOC Model Var/Relationships PDF
+# downloadLink("downloadData", "ORZ Model Report")
+wellPanel(downloadButton("downloadData", "ORZ Model Report"))
+
+    
+output$downloadData <- downloadHandler(
+    filename = "ORZ AOC Model Variables & Relationships_122121.pdf",
+    content = function(file) {
+      file.copy(here::here("ORZ AOC Model Variables & Relationships_122121.pdf"), file)
+    }
+)
+```
+
 Column
 -----------------------------------------------------------------------
 ### Commercial viability
 ```{r}
 # Column {data-width=250}
+
 leafletOutput("cvMap")
 
+# ---- Observer for radio button legends CV ----
+# observeEvent(input$cvMap_groups,{
+#   # print(input$cvMap_groups[2])
+#     cvMap <- leafletProxy("cvMap") %>%
+#       clearTiles() %>% 
+#       addProviderTiles(providers$Esri.OceanBasemap, options = providerTileOptions(pane = "Topographic"), group = "Topographic") %>%
+#       clearControls()
+#     
+#     if (input$cvMap_groups[2] == 'Fetch SI (Shallow)') {
+#       vect <- seq(0.2, 1, by = .05)
+#       cvMap %>% 
+#         # addProviderTiles(providers$Esri.OceanBasemap, options = providerTileOptions(pane = "Topographic"), group = "Topographic") %>%
+#         addLegend(
+#           pal       = colorNumeric(turbo(n =20, direction = -1), domain = vect, na.color = NA, reverse = F),
+#           position  = "bottomleft",
+#           title     = "Fetch SI (Shallow)",        values    = vect,
+#           group     = "Fetch SI (Shallow)",        layerId   = "Fetch SI (Shallow)"
+#           )
+#     }
+#     else if (input$cvMap_groups[2] == "Fetch SI (Deep)") {
+#       vect <- seq(0.2, 1, by = .05)
+#       cvMap %>%   
+#         # addProviderTiles(providers$Esri.OceanBasemap, options = providerTileOptions(pane = "Topographic"), group = "Topographic") %>%
+#         addLegend(
+#             pal       = colorNumeric(turbo(n =20, direction = -1), domain = vect, na.color = NA, reverse = F),
+#             position  = "bottomleft",
+#             title     = "Fetch SI (Deep)",           values    = vect,
+#             group     = "Fetch SI (Deep)",           layerId   = "Fetch SI (Deep)")
+#     }
+#     else if (input$cvMap_groups[2] == "Distance to Roads SI") {
+#       vect <- seq(0.2, 1, by = .05)
+#       cvMap %>%   
+#           # addProviderTiles(providers$Esri.OceanBasemap, options = providerTileOptions(pane = "Topographic"), group = "Topographic") %>%
+#           addLegend(
+#             pal       = colorNumeric(turbo(n =20, direction = -1), domain = vect, na.color = NA, reverse = F),
+#             position  = "bottomleft",
+#             title     = "Distance to Roads SI",      values    = vect,
+#             group     = "Distance to Roads SI",      layerId   = "Distance to Roads SI")
+#               }
+#     else if (input$cvMap_groups[2] == "Sediment deposition SI") {
+#       vect <- seq(0.2, 1, by = .05)
+#       cvMap %>%   
+#           # addProviderTiles(providers$Esri.OceanBasemap, options = providerTileOptions(pane = "Topographic"), group = "Topographic") %>%
+#           addLegend( # Sedimentation Rate CV legend
+#             pal       = colorNumeric(turbo(n =20, direction = -1), domain = vect, na.color = NA, reverse = F),
+#             position  = "bottomleft",
+#             title     = "Sed. dep. SI",              values    = vect,
+#             group     = "Sediment deposition SI",    layerId   = "Sediment deposition SI")
+#         }
+#     else if (input$cvMap_groups[2] == "Shallow water CV (Year 8)") {
+#       vect <- seq(0.2, 1, by = .05)
+#       cvMap %>%   
+#           # addProviderTiles(providers$Esri.OceanBasemap, options = providerTileOptions(pane = "Topographic"), group = "Topographic") %>%
+#           addLegend( # Shallow Water Comm. Viab legend
+#             pal       = colorNumeric(turbo(n =20, direction = -1), domain = vect, na.color = NA, reverse = F),
+#             position  = "topleft",
+#             title     = "Shallow water CV (Year 8)", values  = vect,
+#             group     = "Shallow water CV (Year 8)", layerId = "Shallow water CV (Year 8)")
+#     }    
+#     else if (input$cvMap_groups[2] == "Deep water CV (Year 8)") {
+#       vect <- seq(0.2, 1, by = .05)
+#       cvMap %>%   
+#           # addProviderTiles(providers$Esri.OceanBasemap, options = providerTileOptions(pane = "Topographic"), group = "Topographic") %>%
+#           addLegend(
+#              pal       = colorNumeric(turbo(n =20, direction = -1), domain = vect, na.color = NA, reverse = F),
+#             position  = "topleft",
+#             title     = "Deep water CV (Year 8)",    values = vect,
+#             group     = "Deep water CV (Year 8)",    layerId = "Deep water CV (Year 8)")
+#     }
+#   })
 ```
 
 ```{r}

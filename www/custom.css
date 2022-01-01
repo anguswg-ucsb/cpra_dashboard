@@ -16,7 +16,7 @@ img{
 
 .chart-wrapper, .nav-tabs-custom, .sbframe-commentary {
     background: #5d839e;
-    border: 1px
+    border: 1px;
     border-radius: 3px;
     margin-bottom: 8px;
     margin-right: 8px;
@@ -30,3 +30,10 @@ img{
     padding: 7px 10px 4px;
 }
 
+.section.sidebar .well {
+    min-height: 20px;
+    padding: 19px;
+    margin-bottom: 20px;
+    border-radius: 0;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,0.05);
+}
