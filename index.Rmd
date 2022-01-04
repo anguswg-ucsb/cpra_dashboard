@@ -74,6 +74,11 @@ ov           <- readRDS("mp2023_salinity_si_yr_08.rds")
 aoc          <-  readRDS("mp2023_aoc_yr_08.rds")
 # ov <- raster::stack("mp2023_salinity_si_yr_08.tif")
 
+orz          <- readRDS("mp2023_oyster_resource_zones_aoc.rds")
+
+
+
+
 # ==================
 # ---- Polygons ----
 # ==================
@@ -111,9 +116,16 @@ oyster_leases  <- readRDS("oyster_leases_union.rds")
 
 
 # LDH polygon
-ldh            <- readRDS("ldh_classifications_simple.rds") %>%
+# ldh            <- readRDS("ldh_classifications_simple.rds") %>%
+#                             st_transform(26915) %>%
+#                             st_transform(4326)
+ldh             <- readRDS("oyster_harvest_areas_final.rds") %>%
                             st_transform(26915) %>%
-                            st_transform(4326)
+                            st_transform(4326) 
+
+
+
+
 # depth raster
 # depth <- raster::raster(paste0(path, "depth_inundation/depth_inundation_01_01_480m_resample.tif"))
 
@@ -138,6 +150,7 @@ output$ovMap        <- renderLeaflet({
 output$aocMap        <- renderLeaflet({
     aoc_basemap(
       aoc            = aoc,
+      orz            = orz, 
       aoc_areas      = aoc_areas,
       waterways      = waterways,
       sowb           = sowb,
