@@ -925,18 +925,18 @@ aoc_basemap <- function(
       colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
       opacity   = 0.7,
       group     = "AOC deep (Year 8)") %>%
-    addRasterImage(
-      orz$shallow_aoc_orz,
-      project   = T,
-      colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
-      opacity   = 0.7,
-      group     = "ORZ shallow") %>%
-    addRasterImage(
-      orz$deep_aoc_orz,
-      project   = T,
-      colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
-      opacity   = 0.7,
-      group     = "ORZ deep") %>%
+    # addRasterImage(
+    #   orz$shallow_aoc_orz,
+    #   project   = T,
+    #   colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
+    #   opacity   = 0.7,
+    #   group     = "ORZ shallow") %>%
+    # addRasterImage(
+    #   orz$deep_aoc_orz,
+    #   project   = T,
+    #   colors    = turbo(n = 20, direction = -1),  # colors = rc_fetch_pal,
+    #   opacity   = 0.7,
+    #   group     = "ORZ deep") %>%
     addPolygons(
       data      = aoc_areas,
       fillColor = ~aoc_poly_pal(label),
@@ -1002,16 +1002,16 @@ aoc_basemap <- function(
       position  = "bottomleft",
       title     = "AOC deep (Year 8)",         values    = vect,
       group     = "AOC deep (Year 8)",         layerId   = "AOC deep (Year 8)") %>%
-    addLegend(
-      pal       = aoc_pal,
-      position  = "bottomleft",
-      title     = "ORZ shallow",      values    = vect,
-      group     = "ORZ shallow",      layerId   = "ORZ shallow") %>%
-    addLegend(
-      pal       = aoc_pal,
-      position  = "bottomleft",
-      title     = "ORZ deep",         values    = vect,
-      group     = "ORZ deep",         layerId   = "ORZ deep") %>%
+    # addLegend(
+    #   pal       = aoc_pal,
+    #   position  = "bottomleft",
+    #   title     = "ORZ shallow",      values    = vect,
+    #   group     = "ORZ shallow",      layerId   = "ORZ shallow") %>%
+    # addLegend(
+    #   pal       = aoc_pal,
+    #   position  = "bottomleft",
+    #   title     = "ORZ deep",         values    = vect,
+    #   group     = "ORZ deep",         layerId   = "ORZ deep") %>%
     addLegend(
       pal       = aoc_poly_pal,
       position  = "topleft",
@@ -1052,8 +1052,8 @@ aoc_basemap <- function(
       overlayGroups = c(
         "AOC shallow (Year 8)",
         "AOC deep (Year 8)",
-        "ORZ shallow",
-        "ORZ deep",
+        # "ORZ shallow",
+        # "ORZ deep",
         "USACE navigation channels",
         "State owned water bottoms",
         "Coastal Use Permits",
@@ -1067,8 +1067,8 @@ aoc_basemap <- function(
       c(
         "AOC shallow (Year 8)",
         "AOC deep (Year 8)",
-        "ORZ shallow",
-        "ORZ deep",
+        # "ORZ shallow",
+        # "ORZ deep",
         "USACE navigation channels",
         "State owned water bottoms",
         "Coastal Use Permits",

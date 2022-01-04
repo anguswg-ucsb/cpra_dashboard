@@ -1,5 +1,6 @@
 ---
 title: "CPRA Oyster Resource Zones"
+subtitle: "1/4/22 Draft"
 output:
   flexdashboard::flex_dashboard:
     navbar: null
@@ -53,6 +54,7 @@ source('utils.R')
 ```{r context="server"}
 # local path to data
 path           <- "C:/Users/angus/OneDrive/Desktop/lynker/CPRA/data/"
+# path           <- "C:/Users/JessicaGarrett/Documents/repos/cpra_dashboard/"
 
 # coord ref. system 26915
 crs            <- CRS('+init=EPSG:26915')
@@ -272,7 +274,7 @@ leafletOutput("cvMap")
 ```
 
 ```{r}
-useShinyalert(rmd = TRUE)
+#useShinyalert(rmd = TRUE)
 
 observeEvent(input$cv_info_button, {
   # if(input$my_easy_button == "frozen") {
@@ -376,7 +378,7 @@ leafletOutput("ovMap")
 ```
 
 ```{r}
-useShinyalert(rmd = TRUE)
+#useShinyalert(rmd = TRUE)
 
 observeEvent(input$ov_info_button, {
   # if(input$my_easy_button == "frozen") {
@@ -448,7 +450,7 @@ leafletOutput("aocMap")
 
 
 ```{r}
-useShinyalert(rmd = TRUE)
+#useShinyalert(rmd = TRUE)
 
 observeEvent(input$aoc_info_button, {
   # if(input$my_easy_button == "frozen") {
@@ -491,6 +493,18 @@ observeEvent(input$aoc_info_button, {
                             <td><strong>CPRA Projects</strong></td>
                             <td>Reference layer showing integrated protection projects, which may create regulatory limitations on AOC operations</td>
                          </tr>
+                         <tr>
+                            <td><strong>AOC permitted areas</strong></td>
+                            <td>Reference layer showing current AOC permit locations (provided by LDWF)</td>
+                         </tr>
+                         <tr>
+                            <td><strong>Oyster harvest area classifications</strong></td>
+                            <td>Reference layer which reflects the frequency with which oyster harvest was permissible over the last 10 years</td>
+                         </tr>
+                         <tr>
+                            <td><strong>Oyster leases</strong></td>
+                            <td>Reference layer showing current oyster leases (provided by LDWF)</td>
+                         </tr>                         
                       </tbody>
                   </table>'
                   )
