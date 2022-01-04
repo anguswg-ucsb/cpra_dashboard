@@ -273,7 +273,7 @@ leafletOutput("cvMap")
 ```
 
 ```{r}
-useShinyalert(rmd = TRUE)
+#useShinyalert(rmd = TRUE)
 
 observeEvent(input$cv_info_button, {
   # if(input$my_easy_button == "frozen") {
@@ -377,7 +377,7 @@ leafletOutput("ovMap")
 ```
 
 ```{r}
-useShinyalert(rmd = TRUE)
+#useShinyalert(rmd = TRUE)
 
 observeEvent(input$ov_info_button, {
   # if(input$my_easy_button == "frozen") {
@@ -449,7 +449,7 @@ leafletOutput("aocMap")
 
 
 ```{r}
-useShinyalert(rmd = TRUE)
+#useShinyalert(rmd = TRUE)
 
 observeEvent(input$aoc_info_button, {
   # if(input$my_easy_button == "frozen") {
@@ -492,7 +492,6 @@ observeEvent(input$aoc_info_button, {
                             <td><strong>CPRA Projects</strong></td>
                             <td>Reference layer showing integrated protection projects, which may create regulatory limitations on AOC operations</td>
                          </tr>
-
                          <tr>
                             <td><strong>AOC permitted areas</strong></td>
                             <td>Reference layer showing current AOC permit locations (provided by LDWF)</td>

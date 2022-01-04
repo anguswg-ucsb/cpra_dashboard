@@ -859,7 +859,7 @@ ov_basemap <- function(
 # --- Shiny utils --
 aoc_basemap <- function(
   aoc,
-  #orz,
+  orz,
   aoc_areas,
   waterways,
   sowb,
